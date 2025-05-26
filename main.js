@@ -232,6 +232,25 @@ class ExplorerEnhancerPlugin extends Plugin {
         const applyDividersToElements = () => {
             console.log('Applying dividers to file explorer elements');
             
+            // First, remove any existing divider containers
+            document.querySelectorAll('.explorer-enhancer-divider-container').forEach(el => {
+                el.classList.remove('explorer-enhancer-divider-container');
+                el.removeAttribute('data-divider-text');
+                el.removeAttribute('data-divider-type');
+            });
+            
+            // Use a more robust method to find file explorer elements
+            const allFileItems = document.querySelectorAll('.nav-file-title, .nav-folder-title');
+            const pathToElementMap = {};
+            
+            // Create a map of all paths to their elements
+            allFileItems.forEach(el => {
+                const path = el.getAttribute('data-path');
+                if (path) {
+                    pathToElementMap[path] = el;
+                }
+            });
+            
             // Process each divider configuration
             for (const divider of this.settings.dividers) {
                 const { text, beforePath, type } = divider;
@@ -243,26 +262,22 @@ class ExplorerEnhancerPlugin extends Plugin {
                     continue;
                 }
                 
-                // Find the target element
-                let titleSelector, containerSelector;
-                if (type === 'folder') {
-                    titleSelector = `.nav-folder-title[data-path="${CSS.escape(beforePath)}"]`;
-                    containerSelector = '.nav-folder';
-                } else { // file
-                    titleSelector = `.nav-file-title[data-path="${CSS.escape(beforePath)}"]`;
-                    containerSelector = '.nav-file';
-                }
-                
-                // Find the title element first
-                const titleElement = fileExplorer.querySelector(titleSelector);
+                // Find the element using our map
+                const titleElement = pathToElementMap[beforePath];
                 if (!titleElement) {
                     console.log(`Could not find element for path: ${beforePath}`);
                     continue;
                 }
                 
-                // Then find its container
-                const containerElement = titleElement.closest(containerSelector);
-                if (!containerElement) continue;
+                // Determine the container element based on type
+                const containerElement = type === 'folder' ? 
+                    titleElement.closest('.nav-folder') : 
+                    titleElement.closest('.nav-file');
+                
+                if (!containerElement) {
+                    console.log(`Could not find container for: ${beforePath}`);
+                    continue;
+                }
                 
                 // Apply the divider styling
                 containerElement.classList.add('explorer-enhancer-divider-container');
