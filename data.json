@@ -9,7 +9,7 @@
   "enableCascadingColors": true,
   "applyColorsToFiles": true,
   "colorOpacity": 0.4,
-  "displayVariant": "top-border-bg",
+  "displayVariant": "background",
   "customColors": {
     "light": [
       "#ff6b6b",
