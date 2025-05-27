@@ -1,325 +1,500 @@
-const { Plugin, PluginSettingTab, Setting, Notice, Modal } = require('obsidian');
+const { Plugin, PluginSettingTab, Setting } = require('obsidian');
 
-class ExplorerEnhancerPlugin extends Plugin {
+// Define color schemes
+const COLOR_SCHEMES = {
+    default: ['#ff6b6b', '#f9844a', '#fee440', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff'],
+    pastel: ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff'],
+    dark: ['#03071e', '#370617', '#6a040f', '#9d0208', '#d00000', '#dc2f02', '#e85d04', '#f48c06', '#faa307', '#ffba08'],
+    vibrant: ['#7400b8', '#6930c3', '#5e60ce', '#5390d9', '#4ea8de', '#48bfe3', '#56cfe1', '#64dfdf', '#72efdd', '#80ffdb'],
+    earth: ['#582f0e', '#7f4f24', '#936639', '#a68a64', '#b6ad90', '#c2c5aa', '#a4ac86', '#656d4a', '#414833', '#333d29'],
+    grayscale: ['#212529', '#343a40', '#495057', '#6c757d', '#adb5bd', '#ced4da', '#dee2e6', '#e9ecef', '#f8f9fa']
+};
+
+// Default settings
+const DEFAULT_SETTINGS = {
+    hiddenFiles: [],
+    hiddenFolders: [],
+    enableRainbowFolders: true,
+    rainbowColorScheme: 'default',
+    enableCascadingColors: true,
+    applyColorsToFiles: true,
+    customColors: {
+        light: [...COLOR_SCHEMES.default],
+        dark: [...COLOR_SCHEMES.dark]
+    }
+};
+
+class ExplorerEnhancer extends Plugin {
+    settings = Object.assign({}, DEFAULT_SETTINGS);
+    fileExplorerObserver = null;
+    
     async onload() {
         console.log('Loading Explorer Enhancer plugin');
         
         // Load settings
-        await this.loadSettings();
+        try {
+            const data = await this.loadData();
+            if (data) {
+                this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+                
+                // Ensure custom colors exist
+                if (!this.settings.customColors) {
+                    this.settings.customColors = {
+                        light: [...COLOR_SCHEMES.default],
+                        dark: [...COLOR_SCHEMES.dark]
+                    };
+                }
+                if (!this.settings.customColors.light) {
+                    this.settings.customColors.light = [...COLOR_SCHEMES.default];
+                }
+                if (!this.settings.customColors.dark) {
+                    this.settings.customColors.dark = [...COLOR_SCHEMES.dark];
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+        }
         
-        // Register CSS
-        this.registerMarkdownPostProcessor(this.postProcessor.bind(this));
-        
-        // Register event to modify file explorer
-        this.app.workspace.onLayoutReady(() => this.updateFileExplorer());
-        
-        // Watch for file explorer changes (for when new files are created)
-        this.registerEvent(
-            this.app.vault.on('create', () => this.updateFileExplorer())
-        );
-        this.registerEvent(
-            this.app.vault.on('delete', () => this.updateFileExplorer())
-        );
-        this.registerEvent(
-            this.app.vault.on('rename', () => this.updateFileExplorer())
-        );
-        
-        // When file explorer is shown
-        this.registerEvent(
-            this.app.workspace.on('file-menu', () => this.updateFileExplorer())
-        );
+        // Register for layout-ready event
+        this.app.workspace.onLayoutReady(() => this.initialize());
         
         // Add settings tab
         this.addSettingTab(new ExplorerEnhancerSettingTab(this.app, this));
+    }
+    
+    initialize() {
+        // Add styles for hidden elements
+        this.addHiddenStyles();
         
-        // Add command to refresh file explorer
-        this.addCommand({
-            id: 'refresh-file-explorer',
-            name: 'Refresh File Explorer Enhancements',
-            callback: () => this.updateFileExplorer(),
-        });
+        // Add color picker styles
+        this.addColorPickerStyles();
+        
+        // Apply rainbow colors if enabled
+        if (this.settings.enableRainbowFolders) {
+            this.applyRainbowColors();
+        }
+        
+        // Hide files and folders
+        this.updateHiddenElements();
+        
+        // Set up observer
+        this.setupFileExplorerObserver();
     }
     
     onunload() {
         console.log('Unloading Explorer Enhancer plugin');
-        // Remove our custom styles when plugin unloads
+        
+        // Remove styles
         this.removeStyles();
-    }
-    
-    async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.removeRainbowStyles();
+        this.removeColorPickerStyles();
+        
+        // Unhide all elements
+        document.querySelectorAll('.explorer-enhancer-hidden').forEach(el => {
+            el.classList.remove('explorer-enhancer-hidden');
+            el.style.display = '';
+        });
+        
+        // Disconnect observer
+        if (this.fileExplorerObserver) {
+            this.fileExplorerObserver.disconnect();
+        }
     }
     
     async saveSettings() {
         await this.saveData(this.settings);
-        this.updateFileExplorer();
     }
     
-    postProcessor() {
-        // This is used to process markdown but we're using it as a hook to ensure
-        // our file explorer modifications persist when switching between files
-        setTimeout(() => this.updateFileExplorer(), 100);
+    // Add color picker styles
+    addColorPickerStyles() {
+        const styleEl = document.createElement('style');
+        styleEl.id = 'explorer-enhancer-color-picker-styles';
+        styleEl.textContent = `
+            .explorer-enhancer-color-swatch {
+                width: 24px !important;
+                height: 24px !important;
+                border-radius: 50% !important;
+                margin: 4px !important;
+                cursor: pointer !important;
+                border: 2px solid transparent !important;
+                transition: transform 0.2s ease, border-color 0.2s ease !important;
+                position: relative !important;
+                display: inline-block !important;
+            }
+            
+            .explorer-enhancer-color-swatch:hover {
+                transform: scale(1.1) !important;
+                border-color: var(--text-normal) !important;
+            }
+            
+            .explorer-enhancer-color-swatch.active {
+                border-color: var(--text-normal) !important;
+                transform: scale(1.1) !important;
+            }
+            
+            .explorer-enhancer-color-grid {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                background-color: var(--background-primary-alt) !important;
+                padding: 15px !important;
+                border-radius: 8px !important;
+                margin-bottom: 20px !important;
+            }
+            
+            .explorer-enhancer-header-container {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                margin-bottom: 16px !important;
+            }
+            
+            .explorer-enhancer-reset-container {
+                margin-left: 15px !important;
+            }
+        `;
+        document.head.appendChild(styleEl);
     }
     
-    updateFileExplorer() {
-        // First remove all existing styles and elements
+    // Remove color picker styles
+    removeColorPickerStyles() {
+        const styleEl = document.getElementById('explorer-enhancer-color-picker-styles');
+        if (styleEl) styleEl.remove();
+    }
+    
+    // Add styles for hidden elements
+    addHiddenStyles() {
+        // Remove existing styles
         this.removeStyles();
         
-        // Add a small delay to ensure the file explorer is fully loaded
-        setTimeout(() => {
-            // Apply styles for hidden files and folders
-            this.addStyles();
-            
-            // Apply dividers
-            this.applyDividers();
-            
-            console.log('Explorer Enhancer: Updated file explorer');
-        }, 300);
+        // Create style element
+        const styleEl = document.createElement('style');
+        styleEl.id = 'explorer-enhancer-styles';
+        styleEl.textContent = `
+            .explorer-enhancer-hidden {
+                display: none !important;
+            }
+        `;
+        document.head.appendChild(styleEl);
     }
     
+    // Remove styles
     removeStyles() {
-        // Remove existing style element if it exists
-        const existingStyle = document.getElementById('explorer-enhancer-styles');
-        if (existingStyle) {
-            existingStyle.remove();
-        }
+        const styleEl = document.getElementById('explorer-enhancer-styles');
+        if (styleEl) styleEl.remove();
     }
     
-    // Check if a path is hidden (directly or as a subfolder of a hidden folder)
-    isPathHidden(path) {
-        // Check if the exact path is in hidden files
-        if (this.settings.hiddenFiles.includes(path)) {
-            console.log(`Path ${path} is hidden as file`);
-            return true;
+    // Apply rainbow colors to the file explorer
+    applyRainbowColors() {
+        // Remove existing rainbow styles
+        this.removeRainbowStyles();
+        
+        // Get color scheme
+        let colors = [];
+        if (this.settings.rainbowColorScheme === 'custom') {
+            const isDarkMode = document.body.classList.contains('theme-dark');
+            colors = isDarkMode ? this.settings.customColors.dark : this.settings.customColors.light;
+        } else if (COLOR_SCHEMES[this.settings.rainbowColorScheme]) {
+            colors = COLOR_SCHEMES[this.settings.rainbowColorScheme];
+        } else {
+            colors = COLOR_SCHEMES.default;
         }
         
-        // Check if the exact path is in hidden folders
-        if (this.settings.hiddenFolders.includes(path)) {
-            console.log(`Path ${path} is hidden as folder`);
-            return true;
+        // Validate colors array
+        if (!colors || !colors.length) {
+            console.error('Invalid colors array');
+            colors = COLOR_SCHEMES.default;
         }
         
-        // Check if this is a subfolder of a hidden folder
-        for (const hiddenFolder of this.settings.hiddenFolders) {
-            if (path.startsWith(hiddenFolder + '/')) {
-                console.log(`Path ${path} is hidden as subfolder of ${hiddenFolder}`);
-                return true;
+        // Create style element
+        const styleEl = document.createElement('style');
+        styleEl.id = 'explorer-enhancer-rainbow-styles';
+        let css = '';
+        
+        // Get all elements
+        const folderElements = document.querySelectorAll('.nav-folder-title');
+        const fileElements = this.settings.applyColorsToFiles ? 
+            document.querySelectorAll('.nav-file-title') : [];
+            
+        // Collect all elements into one array for processing
+        const allItems = [];
+        
+        // Add folders to the items array
+        folderElements.forEach(el => {
+            const path = el.getAttribute('data-path');
+            if (path) {
+                allItems.push({
+                    type: 'folder',
+                    path: path,
+                    depth: path.split('/').length - 1,
+                    element: el
+                });
             }
+        });
+        
+        // Add files to the items array if needed
+        if (this.settings.applyColorsToFiles) {
+            fileElements.forEach(el => {
+                const path = el.getAttribute('data-path');
+                if (path) {
+                    const lastSlash = path.lastIndexOf('/');
+                    allItems.push({
+                        type: 'file',
+                        path: path,
+                        depth: path.split('/').length - 1,
+                        element: el,
+                        parentPath: lastSlash > -1 ? path.substring(0, lastSlash) : null
+                    });
+                }
+            });
         }
         
-        return false;
-    }
-    
-    // Check if a folder contains any dividers that would be affected by hiding it
-    checkForDividersInFolder(folderPath) {
-        const affectedDividers = [];
-        
-        // Find dividers that reference this folder or any subpath
-        for (const divider of this.settings.dividers) {
-            if (divider.beforePath === folderPath || divider.beforePath.startsWith(folderPath + '/')) {
-                affectedDividers.push(divider);
+        // First, sort all items by their visual order in the explorer
+        allItems.sort((a, b) => {
+            if (a.element && b.element) {
+                return a.element.compareDocumentPosition(b.element) & 
+                       Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
             }
+            return a.path.localeCompare(b.path);
+        });
+        
+        // Identify top-level folders and files for sequential coloring
+        const topLevelItems = [];
+        allItems.forEach(item => {
+            if (item.path.indexOf('/') === -1) {
+                topLevelItems.push(item);
+            }
+        });
+        
+        // Create a map to store folder colors
+        const folderColors = new Map();
+        
+        // Apply sequential colors to top-level folders and files
+        topLevelItems.forEach((item, index) => {
+            if (item.type === 'file' && !this.settings.applyColorsToFiles) {
+                return; // Skip files if not applying colors to them
+            }
+            
+            const colorIndex = index % colors.length;
+            const color = colors[colorIndex];
+            
+            // Store top-level folder colors for inheritance
+            if (item.type === 'folder') {
+                folderColors.set(item.path, color);
+                css += `
+                    .nav-folder-title[data-path="${this.escapeCssSelector(item.path)}"] {
+                        color: ${color} !important;
+                    }
+                `;
+            } else if (this.settings.applyColorsToFiles) {
+                css += `
+                    .nav-file-title[data-path="${this.escapeCssSelector(item.path)}"] {
+                        color: ${color} !important;
+                    }
+                `;
+            }
+        });
+        
+        // Handle non-top-level items based on cascading setting
+        if (!this.settings.enableCascadingColors) {
+            // WITH CASCADING OFF: Each non-top-level item gets a sequential rainbow color
+            const nonTopLevelItems = allItems.filter(item => item.path.indexOf('/') !== -1);
+            
+            nonTopLevelItems.forEach((item, index) => {
+                if (item.type === 'file' && !this.settings.applyColorsToFiles) {
+                    return; // Skip files if not applying colors to them
+                }
+                
+                const colorIndex = index % colors.length;
+                const color = colors[colorIndex];
+                
+                if (item.type === 'folder') {
+                    css += `
+                        .nav-folder-title[data-path="${this.escapeCssSelector(item.path)}"] {
+                            color: ${color} !important;
+                        }
+                    `;
+                } else {
+                    css += `
+                        .nav-file-title[data-path="${this.escapeCssSelector(item.path)}"] {
+                            color: ${color} !important;
+                        }
+                    `;
+                }
+            });
+        } else {
+            // WITH CASCADING ON: Subfolders/files inherit their top-level parent's color
+            const nonTopLevelItems = allItems.filter(item => item.path.indexOf('/') !== -1);
+            
+            nonTopLevelItems.forEach(item => {
+                if (item.type === 'file' && !this.settings.applyColorsToFiles) {
+                    return; // Skip files if not applying colors to them
+                }
+                
+                // Find top-level parent
+                const parts = item.path.split('/');
+                const topParent = parts[0];
+                const parentColor = folderColors.get(topParent) || colors[0];
+                
+                if (item.type === 'folder') {
+                    css += `
+                        .nav-folder-title[data-path="${this.escapeCssSelector(item.path)}"] {
+                            color: ${parentColor} !important;
+                        }
+                    `;
+                } else {
+                    css += `
+                        .nav-file-title[data-path="${this.escapeCssSelector(item.path)}"] {
+                            color: ${parentColor} !important;
+                        }
+                    `;
+                }
+            });
         }
         
-        return affectedDividers;
+        // Apply the CSS
+        styleEl.textContent = css;
+        document.head.appendChild(styleEl);
     }
     
-    addStyles() {
-        // Remove any existing style elements first
-        this.removeStyles();
+    // Remove rainbow styles
+    removeRainbowStyles() {
+        const styleEl = document.getElementById('explorer-enhancer-rainbow-styles');
+        if (styleEl) styleEl.remove();
+    }
+    
+    // Update hidden elements
+    updateHiddenElements() {
+        // Unhide all elements first
+        document.querySelectorAll('.explorer-enhancer-hidden').forEach(el => {
+            el.classList.remove('explorer-enhancer-hidden');
+            el.style.display = '';
+        });
         
-        // Only proceed if we have files or folders to hide
-        if (this.settings.hiddenFiles.length === 0 && this.settings.hiddenFolders.length === 0) {
+        // Process hidden files
+        if (this.settings.hiddenFiles && this.settings.hiddenFiles.length > 0) {
+            this.settings.hiddenFiles.forEach(file => {
+                // Try exact match
+                let elements = document.querySelectorAll(`.nav-file-title[data-path="${this.escapeCssSelector(file)}"]`);
+                
+                // Try with .md extension if needed
+                if (elements.length === 0 && !file.includes('.')) {
+                    elements = document.querySelectorAll(`.nav-file-title[data-path="${this.escapeCssSelector(file)}.md"]`);
+                }
+                
+                // Hide all matching elements
+                elements.forEach(el => {
+                    el.classList.add('explorer-enhancer-hidden');
+                    el.style.display = 'none';
+                    
+                    // Also hide parent nav-file
+                    const parent = el.closest('.nav-file');
+                    if (parent) {
+                        parent.classList.add('explorer-enhancer-hidden');
+                        parent.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Process hidden folders
+        if (this.settings.hiddenFolders && this.settings.hiddenFolders.length > 0) {
+            this.settings.hiddenFolders.forEach(folder => {
+                // Find folder elements
+                const folderElements = document.querySelectorAll(`.nav-folder-title[data-path="${this.escapeCssSelector(folder)}"]`);
+                
+                // Hide folder elements
+                folderElements.forEach(el => {
+                    el.classList.add('explorer-enhancer-hidden');
+                    el.style.display = 'none';
+                    
+                    // Also hide parent nav-folder
+                    const parent = el.closest('.nav-folder');
+                    if (parent) {
+                        parent.classList.add('explorer-enhancer-hidden');
+                        parent.style.display = 'none';
+                    }
+                });
+                
+                // Hide folder children
+                const prefix = folder + '/';
+                document.querySelectorAll('.nav-file-title, .nav-folder-title').forEach(el => {
+                    const path = el.getAttribute('data-path');
+                    if (path && path.startsWith(prefix)) {
+                        el.classList.add('explorer-enhancer-hidden');
+                        el.style.display = 'none';
+                        
+                        // Also hide parent element
+                        const parent = el.closest('.nav-file, .nav-folder');
+                        if (parent) {
+                            parent.classList.add('explorer-enhancer-hidden');
+                            parent.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        }
+    }
+    
+    // Setup observer
+    setupFileExplorerObserver() {
+        const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+        if (!fileExplorer || !fileExplorer.view) {
+            setTimeout(() => this.setupFileExplorerObserver(), 2000);
             return;
         }
         
-        // Create a style element for our CSS
-        const styleElement = document.createElement('style');
-        styleElement.id = 'explorer-enhancer-styles';
-        
-        // Simple selector format for immediate hiding
-        const selectors = [];
-        
-        // Add selectors for hidden files
-        for (const filePath of this.settings.hiddenFiles) {
-            const escapedPath = CSS.escape(filePath);
-            selectors.push(`.nav-file-title[data-path="${escapedPath}"]`);
-            selectors.push(`.nav-file[data-path="${escapedPath}"]`);
+        const container = fileExplorer.view.containerEl.querySelector('.nav-files-container');
+        if (!container) {
+            setTimeout(() => this.setupFileExplorerObserver(), 2000);
+            return;
         }
         
-        // Add selectors for hidden folders and their subfolders/files
-        for (const folderPath of this.settings.hiddenFolders) {
-            const escapedPath = CSS.escape(folderPath);
+        // Create observer
+        this.fileExplorerObserver = new MutationObserver(() => {
+            this.updateHiddenElements();
             
-            // Hide the folder itself
-            selectors.push(`.nav-folder-title[data-path="${escapedPath}"]`);
-            selectors.push(`.nav-folder[data-path="${escapedPath}"]`);
-            
-            // Hide all subfolders and files (anything that starts with folderPath/)
-            selectors.push(`[data-path^="${escapedPath}/"]`);
-        }
-        
-        // Combine all selectors with the display:none rule
-        if (selectors.length > 0) {
-            const css = `
-                /* Hidden files and folders */
-                ${selectors.join(',\n')} {
-                    display: none !important;
-                }
-            `;
-            
-            styleElement.textContent = css;
-            document.head.appendChild(styleElement);
-            console.log(`Added styles to hide ${this.settings.hiddenFiles.length} files and ${this.settings.hiddenFolders.length} folders`);
-        }
-    }
-    
-    applyDividers() {
-        // Remove any existing divider styles
-        const styleEl = document.getElementById('explorer-enhancer-divider-styles');
-        if (styleEl) styleEl.remove();
-        
-        // Only proceed if we have dividers to apply
-        if (this.settings.dividers.length === 0) return;
-        
-        // Create a new style element for our divider CSS
-        const styleElement = document.createElement('style');
-        styleElement.id = 'explorer-enhancer-divider-styles';
-        
-        // Exactly match the CSS from the user's file-explorer-dividers.css snippet
-        let css = `
-            /* Base styles for dividers - matches file-explorer-dividers.css */
-            .explorer-enhancer-divider-container {
-                position: relative;
+            if (this.settings.enableRainbowFolders) {
+                this.applyRainbowColors();
             }
-            
-            .explorer-enhancer-divider-container::before {
-                content: attr(data-divider-text);
-                --padding-x: 10px;
-                margin-inline-start: calc(24px - var(--padding-x));
-                padding: 0 var(--padding-x);
-                background-color: var(--background-secondary);
-            }
-            
-            .explorer-enhancer-divider-container::after {
-                content: "";
-                display: block;
-                position: absolute;
-                top: calc(0.5em * var(--line-height-tight));
-                width: 100%; /* full width line */
-                height: 0;
-                border-top: 1px solid currentColor;
-                z-index: -1;
-            }
-        `;
-        
-        // Add the style element to the document
-        styleElement.textContent = css;
-        document.head.appendChild(styleElement);
-        
-        // Apply the dividers by directly modifying the DOM
-        // Use MutationObserver to ensure dividers are maintained when the file explorer is updated
-        const fileExplorer = document.querySelector('.nav-files-container');
-        if (!fileExplorer) return;
-        
-        // Remove any existing divider containers first
-        document.querySelectorAll('.explorer-enhancer-divider-container').forEach(el => {
-            el.classList.remove('explorer-enhancer-divider-container');
-            el.removeAttribute('data-divider-text');
         });
         
-        // Function to apply dividers to elements
-        const applyDividersToElements = () => {
-            console.log('Applying dividers to file explorer elements');
-            
-            // First, remove any existing divider containers
-            document.querySelectorAll('.explorer-enhancer-divider-container').forEach(el => {
-                el.classList.remove('explorer-enhancer-divider-container');
-                el.removeAttribute('data-divider-text');
-                el.removeAttribute('data-divider-type');
-            });
-            
-            // Use a more robust method to find file explorer elements
-            const allFileItems = document.querySelectorAll('.nav-file-title, .nav-folder-title');
-            const pathToElementMap = {};
-            
-            // Create a map of all paths to their elements
-            allFileItems.forEach(el => {
-                const path = el.getAttribute('data-path');
-                if (path) {
-                    pathToElementMap[path] = el;
-                }
-            });
-            
-            // Process each divider configuration
-            for (const divider of this.settings.dividers) {
-                const { text, beforePath, type } = divider;
-                if (!text || !beforePath) continue;
-                
-                // Skip dividers for hidden files/folders
-                if (this.isPathHidden(beforePath)) {
-                    console.log(`Skipping divider for hidden path: ${beforePath}`);
-                    continue;
-                }
-                
-                // Find the element using our map
-                const titleElement = pathToElementMap[beforePath];
-                if (!titleElement) {
-                    console.log(`Could not find element for path: ${beforePath}`);
-                    continue;
-                }
-                
-                // Determine the container element based on type
-                const containerElement = type === 'folder' ? 
-                    titleElement.closest('.nav-folder') : 
-                    titleElement.closest('.nav-file');
-                
-                if (!containerElement) {
-                    console.log(`Could not find container for: ${beforePath}`);
-                    continue;
-                }
-                
-                // Apply the divider styling
-                containerElement.classList.add('explorer-enhancer-divider-container');
-                containerElement.setAttribute('data-divider-text', text);
-                containerElement.setAttribute('data-divider-type', type);
-                
-                console.log(`Applied divider '${text}' to ${beforePath} (${type})`);
-            }
-        };
+        // Start observing
+        this.fileExplorerObserver.observe(container, {
+            childList: true,
+            subtree: true
+        });
+    }
+    
+    // Helper to escape CSS selectors
+    escapeCssSelector(str) {
+        return str.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+    }
+    
+    // Update file explorer
+    updateFileExplorer() {
+        // Unhide all elements
+        document.querySelectorAll('.explorer-enhancer-hidden').forEach(el => {
+            el.classList.remove('explorer-enhancer-hidden');
+            el.style.display = '';
+        });
         
-        // Apply dividers immediately
-        applyDividersToElements();
-        
-        // Set up a MutationObserver to reapply dividers when the file explorer changes
-        if (!this.dividerObserver) {
-            this.dividerObserver = new MutationObserver((mutations) => {
-                // Check if any of the mutations affect the file explorer
-                for (const mutation of mutations) {
-                    if (mutation.type === 'childList' || mutation.type === 'attributes') {
-                        // Reapply dividers if the file explorer has changed
-                        applyDividersToElements();
-                        break;
-                    }
-                }
-            });
-            
-            // Start observing the file explorer for changes
-            this.dividerObserver.observe(fileExplorer, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['data-path', 'class']
-            });
+        // Force refresh file explorer if available
+        const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+        if (fileExplorer && fileExplorer.view && fileExplorer.view.requestRefresh) {
+            fileExplorer.view.requestRefresh();
         }
+        
+        // Update hidden elements with a slight delay
+        setTimeout(() => {
+            this.updateHiddenElements();
+            
+            if (this.settings.enableRainbowFolders) {
+                this.applyRainbowColors();
+            }
+        }, 100);
     }
 }
-
-const DEFAULT_SETTINGS = {
-    hiddenFiles: [],
-    hiddenFolders: [],
-    dividers: [] // Each divider should have: {text, beforePath, type (file/folder)}
-};
 
 class ExplorerEnhancerSettingTab extends PluginSettingTab {
     constructor(app, plugin) {
@@ -328,310 +503,328 @@ class ExplorerEnhancerSettingTab extends PluginSettingTab {
     }
     
     display() {
-        const { containerEl } = this;
+        const {containerEl} = this;
         containerEl.empty();
         
-        containerEl.createEl('h2', { text: 'Explorer Enhancer Settings' });
+        // Rainbow Folders section
+        containerEl.createEl('h2', {text: 'Rainbow Folders'});
         
-        // Hidden Files Section
-        containerEl.createEl('h3', { text: 'Hidden Files' });
+        new Setting(containerEl)
+            .setName('Enable Rainbow Folders')
+            .setDesc('Colorize folders in the file explorer based on nesting level')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableRainbowFolders)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableRainbowFolders = value;
+                    await this.plugin.saveSettings();
+                    
+                    if (value) {
+                        this.plugin.applyRainbowColors();
+                    } else {
+                        this.plugin.removeRainbowStyles();
+                    }
+                }));
+                
+        // Cascading colors toggle
+        new Setting(containerEl)
+            .setName('Enable Cascading Colors')
+            .setDesc('If enabled, all folders at the same nesting level get the same color. If disabled, each folder gets a unique color in sequence.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableCascadingColors)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableCascadingColors = value;
+                    await this.plugin.saveSettings();
+                    
+                    if (this.plugin.settings.enableRainbowFolders) {
+                        // Force a complete reapplication of colors
+                        this.plugin.removeRainbowStyles();
+                        
+                        // Add a small delay to ensure DOM is updated
+                        setTimeout(() => {
+                            try {
+                                this.plugin.applyRainbowColors();
+                                console.log('Colors reapplied with cascading:', value);
+                            } catch (error) {
+                                console.error('Error applying rainbow colors:', error);
+                            }
+                        }, 100);
+                    }
+                }));
         
-        // Display current hidden files
+        // Apply colors to files toggle
+        new Setting(containerEl)
+            .setName('Apply Colors to Files')
+            .setDesc('If enabled, files will inherit the color of their parent folder')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.applyColorsToFiles)
+                .onChange(async (value) => {
+                    this.plugin.settings.applyColorsToFiles = value;
+                    await this.plugin.saveSettings();
+                    
+                    if (this.plugin.settings.enableRainbowFolders) {
+                        this.plugin.applyRainbowColors();
+                    }
+                }));
+        
+        // Rainbow color scheme selector
+        new Setting(containerEl)
+            .setName('Rainbow Color Scheme')
+            .setDesc('Choose a color scheme for rainbow folders')
+            .addDropdown(dropdown => {
+                // Add all available color schemes
+                dropdown.addOption('default', 'Default');
+                dropdown.addOption('pastel', 'Pastel');
+                dropdown.addOption('dark', 'Dark');
+                dropdown.addOption('vibrant', 'Vibrant');
+                dropdown.addOption('earth', 'Earth');
+                dropdown.addOption('grayscale', 'Grayscale');
+                dropdown.addOption('custom', 'Custom');
+                
+                dropdown.setValue(this.plugin.settings.rainbowColorScheme);
+                dropdown.onChange(async (value) => {
+                    this.plugin.settings.rainbowColorScheme = value;
+                    await this.plugin.saveSettings();
+                    
+                    // First, immediately update the UI state
+                    if (value === 'custom') {
+                        this.customColorsContainer.style.display = '';
+                    } else {
+                        this.customColorsContainer.style.display = 'none';
+                    }
+                    
+                    // Then apply the new color scheme to folders
+                    if (this.plugin.settings.enableRainbowFolders) {
+                        this.plugin.applyRainbowColors();
+                    }
+                    
+                    // Force update folder colors with slight delay to ensure rendering
+                    setTimeout(() => {
+                        if (this.plugin.settings.enableRainbowFolders) {
+                            this.plugin.applyRainbowColors();
+                        }
+                    }, 50);
+                });
+            });
+        
+        // Custom colors section
+        this.customColorsContainer = containerEl.createDiv('custom-colors-container');
+        
+        // Hide if not using custom colors
+        if (this.plugin.settings.rainbowColorScheme !== 'custom') {
+            this.customColorsContainer.style.display = 'none';
+        }
+        
+        // Light mode custom colors
+        new Setting(this.customColorsContainer)
+            .setName('Light Mode Colors')
+            .setDesc('Define custom colors for light mode');
+        
+        this.createColorPicker(this.customColorsContainer, 'light');
+        
+        // Dark mode custom colors
+        new Setting(this.customColorsContainer)
+            .setName('Dark Mode Colors')
+            .setDesc('Define custom colors for dark mode');
+        
+        this.createColorPicker(this.customColorsContainer, 'dark');
+        
+        // Hidden files section
+        containerEl.createEl('h2', {text: 'Hidden Files and Folders'});
+        
+        // Hidden files list
+        new Setting(containerEl)
+            .setName('Hidden Files')
+            .setDesc('Files that will be hidden in the file explorer');
+        
         const hiddenFilesContainer = containerEl.createDiv('hidden-files-container');
         
-        if (this.plugin.settings.hiddenFiles.length === 0) {
-            hiddenFilesContainer.createEl('p', { 
-                text: 'No files are currently hidden.',
-                cls: 'setting-item-description' 
-            });
-        } else {
-            for (let i = 0; i < this.plugin.settings.hiddenFiles.length; i++) {
-                const file = this.plugin.settings.hiddenFiles[i];
-                const fileSetting = new Setting(hiddenFilesContainer)
-                    .setDesc(file)
+        if (this.plugin.settings.hiddenFiles && this.plugin.settings.hiddenFiles.length > 0) {
+            this.plugin.settings.hiddenFiles.forEach((file, index) => {
+                new Setting(hiddenFilesContainer)
+                    .setName(file)
                     .addButton(button => button
-                        .setIcon('trash')
-                        .setTooltip('Remove')
+                        .setButtonText('Remove')
                         .onClick(async () => {
-                            this.plugin.settings.hiddenFiles.splice(i, 1);
+                            this.plugin.settings.hiddenFiles.splice(index, 1);
                             await this.plugin.saveSettings();
+                            this.plugin.updateFileExplorer();
                             this.display();
-                        })
-                    );
-            }
+                        }));
+            });
         }
         
         // Add new hidden file
-        let filePathToHide = '';
         new Setting(containerEl)
             .setName('Add Hidden File')
-            .setDesc('Enter the path to a file you want to hide from the file explorer')
+            .setDesc('Add a file to hide in the file explorer')
             .addText(text => text
-                .setPlaceholder('path/to/file.md')
-                .setValue('')
+                .setPlaceholder('path/to/file')
                 .onChange((value) => {
-                    filePathToHide = value;
-                })
-            )
+                    this.newHiddenFile = value;
+                }))
             .addButton(button => button
                 .setButtonText('Add')
-                .setCta()
                 .onClick(async () => {
-                    const filePath = filePathToHide.trim();
-                    
-                    if (filePath && !this.plugin.settings.hiddenFiles.includes(filePath)) {
-                        this.plugin.settings.hiddenFiles.push(filePath);
+                    if (this.newHiddenFile) {
+                        if (!this.plugin.settings.hiddenFiles) {
+                            this.plugin.settings.hiddenFiles = [];
+                        }
+                        this.plugin.settings.hiddenFiles.push(this.newHiddenFile);
                         await this.plugin.saveSettings();
-                        filePathToHide = '';
+                        this.plugin.updateFileExplorer();
+                        this.newHiddenFile = '';
                         this.display();
-                        new Notice(`File path "${filePath}" added to hidden files`);
-                    } else if (!filePath) {
-                        new Notice('Please enter a file path');
-                    } else {
-                        new Notice('This file path is already hidden');
                     }
-                })
-            );
+                }));
         
-        // Hidden Folders Section
-        containerEl.createEl('h3', { text: 'Hidden Folders' });
+        // Hidden folders list
+        new Setting(containerEl)
+            .setName('Hidden Folders')
+            .setDesc('Folders that will be hidden in the file explorer');
         
-        // Display current hidden folders
         const hiddenFoldersContainer = containerEl.createDiv('hidden-folders-container');
         
-        if (this.plugin.settings.hiddenFolders.length === 0) {
-            hiddenFoldersContainer.createEl('p', { 
-                text: 'No folders are currently hidden.',
-                cls: 'setting-item-description' 
-            });
-        } else {
-            for (let i = 0; i < this.plugin.settings.hiddenFolders.length; i++) {
-                const folder = this.plugin.settings.hiddenFolders[i];
-                const folderSetting = new Setting(hiddenFoldersContainer)
-                    .setDesc(folder)
+        if (this.plugin.settings.hiddenFolders && this.plugin.settings.hiddenFolders.length > 0) {
+            this.plugin.settings.hiddenFolders.forEach((folder, index) => {
+                new Setting(hiddenFoldersContainer)
+                    .setName(folder)
                     .addButton(button => button
-                        .setIcon('trash')
-                        .setTooltip('Remove')
+                        .setButtonText('Remove')
                         .onClick(async () => {
-                            this.plugin.settings.hiddenFolders.splice(i, 1);
+                            this.plugin.settings.hiddenFolders.splice(index, 1);
                             await this.plugin.saveSettings();
+                            this.plugin.updateFileExplorer();
                             this.display();
-                        })
-                    );
-            }
+                        }));
+            });
         }
         
         // Add new hidden folder
-        let folderPathToHide = '';
         new Setting(containerEl)
             .setName('Add Hidden Folder')
-            .setDesc('Enter the path to a folder you want to hide from the file explorer')
+            .setDesc('Add a folder to hide in the file explorer')
             .addText(text => text
                 .setPlaceholder('path/to/folder')
-                .setValue('')
                 .onChange((value) => {
-                    folderPathToHide = value;
-                })
-            )
+                    this.newHiddenFolder = value;
+                }))
             .addButton(button => button
                 .setButtonText('Add')
-                .setCta()
                 .onClick(async () => {
-                    const folderPath = folderPathToHide.trim();
-                    
-                    if (folderPath && !this.plugin.settings.hiddenFolders.includes(folderPath)) {
-                        // Check if there are dividers that would be affected
-                        const affectedDividers = this.plugin.checkForDividersInFolder(folderPath);
-                        
-                        const proceedWithHiding = async () => {
-                            // Remove affected dividers if any
-                            if (affectedDividers.length > 0) {
-                                // Filter out the affected dividers
-                                this.plugin.settings.dividers = this.plugin.settings.dividers.filter(divider => 
-                                    !affectedDividers.includes(divider));
-                            }
-                            
-                            // Add the folder to hidden folders
-                            this.plugin.settings.hiddenFolders.push(folderPath);
-                            await this.plugin.saveSettings();
-                            folderPathToHide = '';
-                            this.display();
-                            
-                            if (affectedDividers.length > 0) {
-                                new Notice(`Folder "${folderPath}" hidden. ${affectedDividers.length} dividers were removed.`);
-                            } else {
-                                new Notice(`Folder path "${folderPath}" added to hidden folders`);
-                            }
-                        };
-                        
-                        if (affectedDividers.length > 0) {
-                            // Create a modal to confirm deletion of dividers
-                            const modal = new DividerWarningModal(
-                                this.app, 
-                                folderPath, 
-                                affectedDividers,
-                                proceedWithHiding
-                            );
-                            modal.open();
-                        } else {
-                            // No dividers affected, proceed normally
-                            await proceedWithHiding();
+                    if (this.newHiddenFolder) {
+                        if (!this.plugin.settings.hiddenFolders) {
+                            this.plugin.settings.hiddenFolders = [];
                         }
-                    } else if (!folderPath) {
-                        new Notice('Please enter a folder path');
-                    } else {
-                        new Notice('This folder path is already hidden');
+                        this.plugin.settings.hiddenFolders.push(this.newHiddenFolder);
+                        await this.plugin.saveSettings();
+                        this.plugin.updateFileExplorer();
+                        this.newHiddenFolder = '';
+                        this.display();
                     }
-                })
-            );
+                }));
+    }
+    
+    // Create color picker for custom colors
+    createColorPicker(containerEl, mode) {
+        // Create header container
+        const headerContainer = containerEl.createDiv();
+        headerContainer.createEl('span', {text: 'Select colors (click to edit)'});
         
-        // Dividers Section
-        containerEl.createEl('h3', { text: 'Explorer Dividers' });
+        // Add reset button
+        const resetButton = document.createElement('button');
+        resetButton.textContent = 'Reset to Default';
+        resetButton.style.marginLeft = '10px';
+        headerContainer.appendChild(resetButton);
         
-        // Display current dividers
-        const dividersContainer = containerEl.createDiv('dividers-container');
+        resetButton.onclick = async () => {
+            // Reset colors to default
+            const defaultColors = mode === 'light' ? COLOR_SCHEMES.default : COLOR_SCHEMES.dark;
+            this.plugin.settings.customColors[mode] = [...defaultColors];
+            await this.plugin.saveSettings();
+            
+            // Update the UI
+            this.display();
+            
+            // Update folder colors
+            if (this.plugin.settings.enableRainbowFolders) {
+                this.plugin.applyRainbowColors();
+            }
+        };
         
-        if (this.plugin.settings.dividers.length === 0) {
-            dividersContainer.createEl('p', { 
-                text: 'No dividers have been added.',
-                cls: 'setting-item-description' 
-            });
-        } else {
-            for (let i = 0; i < this.plugin.settings.dividers.length; i++) {
-                const divider = this.plugin.settings.dividers[i];
-                const typeText = divider.type ? ` (${divider.type})` : '';
-                const dividerSetting = new Setting(dividersContainer)
-                    .setName(divider.text)
-                    .setDesc(`Before: ${divider.beforePath}${typeText}`)
-                    .addButton(button => button
-                        .setIcon('trash')
-                        .setTooltip('Remove')
-                        .onClick(async () => {
-                            this.plugin.settings.dividers.splice(i, 1);
-                            await this.plugin.saveSettings();
-                            this.display();
-                        })
-                    );
+        // Create color grid
+        const colorGrid = document.createElement('div');
+        colorGrid.style.display = 'flex';
+        colorGrid.style.flexWrap = 'wrap';
+        colorGrid.style.gap = '10px';
+        colorGrid.style.padding = '15px';
+        colorGrid.style.backgroundColor = 'var(--background-primary-alt)';
+        colorGrid.style.borderRadius = '5px';
+        colorGrid.style.marginTop = '10px';
+        colorGrid.style.marginBottom = '20px';
+        containerEl.appendChild(colorGrid);
+        
+        // Get colors for current mode
+        const colors = this.plugin.settings.customColors[mode];
+        
+        // Create color swatches
+        if (colors && colors.length > 0) {
+            for (let i = 0; i < colors.length; i++) {
+                // Capture the current index for closure
+                const currentIndex = i;
+                
+                // Create a color swatch element
+                const swatch = document.createElement('div');
+                swatch.style.width = '30px';
+                swatch.style.height = '30px';
+                swatch.style.borderRadius = '50%';
+                swatch.style.backgroundColor = colors[i];
+                swatch.style.cursor = 'pointer';
+                swatch.style.border = '2px solid transparent';
+                swatch.style.transition = 'transform 0.2s ease';
+                
+                // Add hover effect
+                swatch.onmouseover = () => {
+                    swatch.style.transform = 'scale(1.1)';
+                    swatch.style.borderColor = 'white';
+                };
+                swatch.onmouseout = () => {
+                    swatch.style.transform = 'scale(1.0)';
+                    swatch.style.borderColor = 'transparent';
+                };
+                
+                // Add click handler for color picking
+                swatch.onclick = async () => {
+                    // Create a color input element
+                    const input = document.createElement('input');
+                    input.type = 'color';
+                    input.value = colors[currentIndex];
+                    
+                    // Set up the change handler
+                    input.onchange = async (e) => {
+                        const newColor = e.target.value;
+                        
+                        // Update the swatch visually
+                        swatch.style.backgroundColor = newColor;
+                        
+                        // Update the stored color
+                        this.plugin.settings.customColors[mode][currentIndex] = newColor;
+                        await this.plugin.saveSettings();
+                        
+                        // Apply colors to folders
+                        if (this.plugin.settings.enableRainbowFolders) {
+                            this.plugin.applyRainbowColors();
+                        }
+                    };
+                    
+                    // Open the color picker
+                    input.click();
+                };
+                
+                // Add to the color grid
+                colorGrid.appendChild(swatch);
             }
         }
-        
-        // Add new divider - collect inputs in variables
-        let dividerText = '';
-        let dividerBeforePath = '';
-        let dividerType = 'file'; // Default to file type
-        
-        const dividerTextSetting = new Setting(containerEl)
-            .setName('Divider Text')
-            .setDesc('Enter the text to display in the divider (can include emoji)')
-            .addText(text => text
-                .setPlaceholder('📝 Notes')
-                .setValue('')
-                .onChange((value) => {
-                    dividerText = value;
-                })
-            );
-        
-        new Setting(containerEl)
-            .setName('Divider Type')
-            .setDesc('Select whether this divider appears before a file or folder')
-            .addDropdown(dropdown => dropdown
-                .addOption('file', 'File')
-                .addOption('folder', 'Folder')
-                .setValue(dividerType)
-                .onChange((value) => {
-                    dividerType = value;
-                })
-            );
-        
-        const dividerBeforeSetting = new Setting(containerEl)
-            .setName('Insert Before')
-            .setDesc('Enter the path to the file/folder before which this divider should appear')
-            .addText(text => text
-                .setPlaceholder('path/to/file-or-folder')
-                .setValue('')
-                .onChange((value) => {
-                    dividerBeforePath = value;
-                })
-            );
-        
-        new Setting(containerEl)
-            .addButton(button => button
-                .setButtonText('Add Divider')
-                .setCta()
-                .onClick(async () => {
-                    const text = dividerText.trim();
-                    const beforePath = dividerBeforePath.trim();
-                    
-                    if (text && beforePath) {
-                        this.plugin.settings.dividers.push({ 
-                            text, 
-                            beforePath,
-                            type: dividerType
-                        });
-                        await this.plugin.saveSettings();
-                        dividerText = '';
-                        dividerBeforePath = '';
-                        this.display();
-                        new Notice(`Divider "${text}" added before ${dividerType} ${beforePath}`);
-                    } else {
-                        new Notice('Both divider text and path are required.');
-                    }
-                })
-            );
     }
 }
 
-// Modal to warn about dividers that would be affected by hiding a folder
-class DividerWarningModal extends Modal {
-    constructor(app, folderPath, affectedDividers, onConfirm) {
-        super(app);
-        this.folderPath = folderPath;
-        this.affectedDividers = affectedDividers;
-        this.onConfirm = onConfirm;
-    }
-    
-    onOpen() {
-        const {contentEl} = this;
-        
-        contentEl.createEl('h2', {text: 'Warning: Dividers Will Be Removed'});
-        contentEl.createEl('p', {
-            text: `Hiding folder "${this.folderPath}" will affect ${this.affectedDividers.length} divider${this.affectedDividers.length > 1 ? 's' : ''}.`
-        });
-        
-        // Show the affected dividers
-        const dividersList = contentEl.createEl('div', {cls: 'affected-dividers-list'});
-        
-        contentEl.createEl('p', {
-            text: 'The following dividers will be removed:',
-            cls: 'warning-text'
-        });
-        
-        for (const divider of this.affectedDividers) {
-            const dividerItem = dividersList.createEl('div', {cls: 'divider-item'});
-            dividerItem.createEl('span', {
-                text: `"${divider.text}" before ${divider.beforePath}`,
-                cls: 'divider-info'
-            });
-        }
-        
-        const buttonContainer = contentEl.createEl('div', {cls: 'button-container'});
-        
-        buttonContainer.createEl('button', {text: 'Cancel'})
-            .addEventListener('click', () => {
-                this.close();
-            });
-        
-        buttonContainer.createEl('button', {text: 'Proceed Anyway', cls: 'mod-warning'})
-            .addEventListener('click', () => {
-                this.close();
-                this.onConfirm();
-            });
-    }
-    
-    onClose() {
-        const {contentEl} = this;
-        contentEl.empty();
-    }
-}
-
-module.exports = ExplorerEnhancerPlugin;
+module.exports = ExplorerEnhancer;

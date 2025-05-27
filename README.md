@@ -1,12 +1,25 @@
 # Explorer Enhancer for Obsidian
 
-A plugin that enhances Obsidian's file explorer with features like hiding files/folders and adding dividers to organize your vault visually.
+A plugin that enhances Obsidian's file explorer with features like rainbow folders, hiding files/folders, and adding dividers to organize your vault visually.
 
 ## Features
 
-- **Hidden Files & Folders**: Hide specific files or folders from the file explorer
-- **Explorer Dividers**: Add visual dividers with custom text before files or folders
+### Rainbow Folders
+- **Colorize Folders**: Apply colors to folders in the file explorer for easier visual organization
+- **Multiple Color Schemes**: Choose from predefined color schemes or create your own custom colors
+- **Light & Dark Mode Support**: Separate color configurations for light and dark themes
+- **Sequential Coloring**: Top-level folders always get sequential rainbow colors
+- **Cascading Colors Option**: Choose whether nested items inherit parent colors or get their own colors
+- **Apply Colors to Files**: Optionally apply colors to files based on their parent folder
+
+### Hidden Files & Folders
+- **Hide Specific Items**: Hide individual files or folders from the file explorer
+- **Path-Based Hiding**: Hide items based on their path in the vault
+- **Nested Hiding**: When hiding a folder, all its contents are also hidden
+
+### Additional Features
 - **Persistent Settings**: All configurations are saved and restored between sessions
+- **Intuitive Settings Interface**: Easy-to-use settings panel with color pickers
 
 ## Installation with BRAT
 

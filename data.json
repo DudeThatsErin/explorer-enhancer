@@ -1,13 +1,80 @@
 {
-  "hiddenFiles": [
-    "Bugfixes"
-  ],
+  "hiddenFiles": [],
   "hiddenFolders": [],
+  "enableRainbowFolders": true,
+  "rainbowColorScheme": "custom",
+  "enableCascadingColors": true,
+  "applyColorsToFiles": true,
+  "customColors": {
+    "light": [
+      "#F44336",
+      "#FF9800",
+      "#FFC107",
+      "#4CAF50",
+      "#2196F3",
+      "#afb7e4",
+      "#9C27B0",
+      "#E91E63",
+      "#795548",
+      "#607D8B"
+    ],
+    "dark": [
+      "#60907b",
+      "#c68324",
+      "#b8b29d",
+      "#4CAF50",
+      "#2196F3",
+      "#77b9cf",
+      "#9C27B0",
+      "#E91E63",
+      "#795548",
+      "#607D8B"
+    ]
+  },
+  "enableFolderIcons": false,
   "dividers": [
     {
-      "text": "tttt",
+      "text": "ttt",
       "beforePath": "SCRATCHPAD",
       "type": "file"
+    },
+    {
+      "text": "TEST",
+      "beforePath": "Handwritten Tasks",
+      "type": "file"
     }
-  ]
+  ],
+  "dividerCustomCSS": "",
+  "dividerStyle": {
+    "textColor": "#888888",
+    "lineColor": "#cccccc",
+    "backgroundColor": "var(--background-secondary)",
+    "fontWeight": "normal",
+    "fontStyle": "normal",
+    "fontSize": "14px"
+  },
+  "enableRainbowSidebar": true,
+  "rainbowStyle": "text",
+  "increaseContrast": false,
+  "colorOpacity": 50,
+  "cascadeColors": true,
+  "colorSettings": {
+    "background": {
+      "light": "#f5f5f5",
+      "dark": "#333333"
+    },
+    "backgroundHover": {
+      "light": "#e0e0e0",
+      "dark": "#444444"
+    },
+    "text": {
+      "light": "#333333",
+      "dark": "#f5f5f5"
+    },
+    "textHover": {
+      "light": "#111111",
+      "dark": "#ffffff"
+    }
+  },
+  "opacityLevel": 0.5
 }
