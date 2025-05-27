@@ -2,12 +2,14 @@ const { Plugin, PluginSettingTab, Setting } = require('obsidian');
 
 // Define color schemes
 const COLOR_SCHEMES = {
-    default: ['#ff6b6b', '#f9844a', '#fee440', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff'],
-    pastel: ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff'],
+    default: ['#ff6b6b', '#f9844a', '#fee440', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff', '#ff90e8', '#ffafcc', '#ffcce5'],
+    pastel: ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff', '#ffb3c1', '#ffdde1'],
     dark: ['#03071e', '#370617', '#6a040f', '#9d0208', '#d00000', '#dc2f02', '#e85d04', '#f48c06', '#faa307', '#ffba08'],
     vibrant: ['#7400b8', '#6930c3', '#5e60ce', '#5390d9', '#4ea8de', '#48bfe3', '#56cfe1', '#64dfdf', '#72efdd', '#80ffdb'],
     earth: ['#582f0e', '#7f4f24', '#936639', '#a68a64', '#b6ad90', '#c2c5aa', '#a4ac86', '#656d4a', '#414833', '#333d29'],
-    grayscale: ['#212529', '#343a40', '#495057', '#6c757d', '#adb5bd', '#ced4da', '#dee2e6', '#e9ecef', '#f8f9fa']
+    grayscale: ['#212529', '#343a40', '#495057', '#6c757d', '#adb5bd', '#ced4da', '#dee2e6', '#e9ecef', '#f8f9fa', '#ffffff'],
+    light: ['#c1f5c1', '#c1d9f5', '#c1f5f1', '#f5c1e4', '#e3c1f5', '#f5d8c1', '#f5c1c1', '#c7f9cc', '#a4def5', '#d6c4f5'],
+    neon: ['#ff00ff', '#00ffff', '#ff0000', '#00ff00', '#ffff00', '#ff8800', '#00ff88', '#0088ff', '#8800ff', '#ffffff']
 };
 
 // Default settings
@@ -19,8 +21,8 @@ const DEFAULT_SETTINGS = {
     enableCascadingColors: true,
     applyColorsToFiles: true,
     customColors: {
-        light: [...COLOR_SCHEMES.default],
-        dark: [...COLOR_SCHEMES.dark]
+        light: [...COLOR_SCHEMES.vibrant],
+        dark: [...COLOR_SCHEMES.vibrant]
     }
 };
 
@@ -40,15 +42,15 @@ class ExplorerEnhancer extends Plugin {
                 // Ensure custom colors exist
                 if (!this.settings.customColors) {
                     this.settings.customColors = {
-                        light: [...COLOR_SCHEMES.default],
-                        dark: [...COLOR_SCHEMES.dark]
+                        light: [...COLOR_SCHEMES.vibrant],
+                        dark: [...COLOR_SCHEMES.vibrant]
                     };
                 }
                 if (!this.settings.customColors.light) {
-                    this.settings.customColors.light = [...COLOR_SCHEMES.default];
+                    this.settings.customColors.light = [...COLOR_SCHEMES.vibrant];
                 }
                 if (!this.settings.customColors.dark) {
-                    this.settings.customColors.dark = [...COLOR_SCHEMES.dark];
+                    this.settings.customColors.dark = [...COLOR_SCHEMES.vibrant];
                 }
             }
         } catch (error) {
@@ -572,13 +574,9 @@ class ExplorerEnhancerSettingTab extends PluginSettingTab {
             .setDesc('Choose a color scheme for rainbow folders')
             .addDropdown(dropdown => {
                 // Add all available color schemes
-                dropdown.addOption('default', 'Default');
-                dropdown.addOption('pastel', 'Pastel');
-                dropdown.addOption('dark', 'Dark');
-                dropdown.addOption('vibrant', 'Vibrant');
-                dropdown.addOption('earth', 'Earth');
-                dropdown.addOption('grayscale', 'Grayscale');
-                dropdown.addOption('custom', 'Custom');
+                for (const scheme of ['default', 'pastel', 'dark', 'vibrant', 'earth', 'grayscale', 'light', 'neon', 'custom']) {
+                    dropdown.addOption(scheme, scheme.charAt(0).toUpperCase() + scheme.slice(1));
+                }
                 
                 dropdown.setValue(this.plugin.settings.rainbowColorScheme);
                 dropdown.onChange(async (value) => {

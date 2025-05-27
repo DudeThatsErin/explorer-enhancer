@@ -1,0 +1,62 @@
+/* File Explorer Dividers  */
+.nav-folder:has(> :is(
+        [data-path="FOLDERNAME1"],
+        [data-path="FOLDERNAME2"],
+		[data-path="FOLDERNAME3"],
+    )), .nav-file:has(> :is([data-path="FILENAME1"], [data-path="FILENAME2"], [data-path="FILENAME3"])) {
+	position: relative;
+
+	&::before {
+		content: "";
+		--padding-x: 10px;
+		margin-inline-start: calc(24px - var(--padding-x));
+		padding: 0 var(--padding-x);
+		background-color: var(--background-secondary);
+		/*background-color: #262626;*/
+	}
+
+	&::after {
+		content: "";
+		display: block;
+		position: absolute;
+		top: calc(0.5em * var(--line-height-tight));
+		width: 100%; /* change for something smaller if you don't want the divider to span full length */
+		height: 0;
+		border-top: 1px solid currentColor;
+		z-index: -1;
+	}
+}
+
+.nav-folder:has(> [data-path="FOLDERNAME1"])::before { content: "FOLDERNAME1"; }
+.nav-folder:has(> [data-path="FOLDERNAME2"])::before { content: "FOLDERNAME2"; }
+.nav-folder:has(> [data-path="FOLDERNAME3"])::before { content: "FOLDERNAME3"; }
+.nav-file:has(> :is([data-path="FILENAME1"], [data-path="FILENAME2"], [data-path="FILENAME3"]))::before { content: "FILENAME1"; }
+
+/* files */
+.nav-file:has(> :is(
+        [data-path="FILENAME1"],
+        [data-path="FILENAME2"],
+        [data-path="FILENAME3"]
+    )) {
+	position: relative;
+
+	&::before {
+		content: "";
+		--padding-x: 10px;
+		margin-inline-start: calc(24px - var(--padding-x));
+		padding: 0 var(--padding-x);
+		background-color: var(--background-secondary);
+		/*background-color: #262626;*/
+	}
+
+	&::after {
+		content: "";
+		display: block;
+		position: absolute;
+		top: calc(0.5em * var(--line-height-tight));
+		width: 100%; /* change for something smaller if you don't want the divider to span full length */
+		height: 0;
+		border-top: 1px solid currentColor;
+		z-index: -1;
+	}
+}
