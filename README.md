@@ -4,6 +4,8 @@ A plugin that enhances Obsidian's file explorer with features like rainbow folde
 
 ## Features
 
+If you would like to supply more colors, I always use groups of 10 colors. Please provide me 10 colors as [hex color codes](https://htmlcolorcodes.com/) (like #000000 or #e2e5e5) and I will add them as an option in the drop down! Just open an issue here.
+
 ### Rainbow Folders
 - **Colorize Folders**: Apply colors to folders in the file explorer for easier visual organization
 - **Multiple Color Schemes**: Choose from predefined color schemes or create your own custom colors
@@ -75,17 +77,18 @@ A plugin that enhances Obsidian's file explorer with features like rainbow folde
 
 ## Screenshots
 
-Place screenshots in the `.github` folder of the repository:
+<img width="816" alt="image" src="https://github.com/user-attachments/assets/18d733f3-31c6-4cc7-a06c-ca6ffd2fc414" />
+<img width="796" alt="image" src="https://github.com/user-attachments/assets/8e20fe8f-bacd-47bc-828b-abe54df7d532" />
+<img width="1226" alt="image" src="https://github.com/user-attachments/assets/862fe771-e9d1-4857-83b8-f6ff9e95e055" />
+<img width="1236" alt="image" src="https://github.com/user-attachments/assets/3ff4f01a-8024-482b-8251-4024fe84a547" />
+<img width="1236" alt="image" src="https://github.com/user-attachments/assets/4c930e76-c8fb-4290-9423-3209998b6f0b" />
+<img width="1240" alt="image" src="https://github.com/user-attachments/assets/ce9330ec-e006-40be-bc16-f32203ae2807" />
+<img width="1231" alt="image" src="https://github.com/user-attachments/assets/7a83290e-3621-4287-9fa8-61618d9f9d48" />
+<img width="1244" alt="image" src="https://github.com/user-attachments/assets/61b0c8e1-a3a3-4cfe-981f-2261308efefe" />
+<img width="1255" alt="image" src="https://github.com/user-attachments/assets/a6cdfa01-8ebe-4550-b95c-6e274ddc1021" />
+<img width="1227" alt="image" src="https://github.com/user-attachments/assets/aed35400-0c66-442a-9d22-3f743a5f0f12" />
 
-```
-explorer-enhancer/
-├── .github/
-│   ├── screenshots/
-│   │   ├── settings.png
-│   │   ├── hidden-files.png
-│   │   ├── dividers.png
-│   │   └── file-explorer-view.png
-```
+
 
 ## Custom Styling
 
