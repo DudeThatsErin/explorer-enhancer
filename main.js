@@ -496,6 +496,24 @@ class ExplorerEnhancer extends Plugin {
                         padding-bottom: 2px !important;
                     }
                 `;
+            case 'left-right-border':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-left: 2px solid ${hexColor} !important;
+                        border-right: 2px solid ${hexColor} !important;
+                        padding-left: 4px !important;
+                        padding-right: 4px !important;
+                    }
+                `;
+            case 'top-bottom-border':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-top: 2px solid ${hexColor} !important;
+                        border-bottom: 2px solid ${hexColor} !important;
+                        padding-top: 2px !important;
+                        padding-bottom: 2px !important;
+                    }
+                `;
             case 'all-border':
                 return `
                     ${selector}[data-path="${escapedPath}"] {
@@ -537,6 +555,26 @@ class ExplorerEnhancer extends Plugin {
                         border-bottom: 3px solid ${hexColor} !important;
                         background-color: ${rgbaColor} !important;
                         border-radius: 4px 4px 0 0 !important;
+                        padding-bottom: 2px !important;
+                    }
+                `;
+            case 'left-right-border-bg':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-left: 2px solid ${hexColor} !important;
+                        border-right: 2px solid ${hexColor} !important;
+                        background-color: ${rgbaColor} !important;
+                        padding-left: 4px !important;
+                        padding-right: 4px !important;
+                    }
+                `;
+            case 'top-bottom-border-bg':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-top: 2px solid ${hexColor} !important;
+                        border-bottom: 2px solid ${hexColor} !important;
+                        background-color: ${rgbaColor} !important;
+                        padding-top: 2px !important;
                         padding-bottom: 2px !important;
                     }
                 `;
@@ -750,12 +788,16 @@ class ExplorerEnhancerSettingTab extends PluginSettingTab {
                 dropdown.addOption('top-border', 'Top Border');
                 dropdown.addOption('right-border', 'Right Border');
                 dropdown.addOption('bottom-border', 'Bottom Border');
+                dropdown.addOption('left-right-border', 'Left+Right Borders');
+                dropdown.addOption('top-bottom-border', 'Top+Bottom Borders');
                 dropdown.addOption('all-border', 'All Borders');
                 // Borders with backgrounds
                 dropdown.addOption('bordered-bg', 'Left Border + BG');
                 dropdown.addOption('top-border-bg', 'Top Border + BG');
                 dropdown.addOption('right-border-bg', 'Right Border + BG');
                 dropdown.addOption('bottom-border-bg', 'Bottom Border + BG');
+                dropdown.addOption('left-right-border-bg', 'Left+Right Borders + BG');
+                dropdown.addOption('top-bottom-border-bg', 'Top+Bottom Borders + BG');
                 dropdown.addOption('all-border-bg', 'All Borders + BG');
                 // Bullet point
                 dropdown.addOption('dot', 'Bullet Point');

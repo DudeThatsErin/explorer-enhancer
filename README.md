@@ -22,12 +22,16 @@ If you would like to supply more colors, I always use groups of 10 colors. Pleas
     - **Top Border**: Adds a colored border to the top of items
     - **Right Border**: Adds a colored border to the right side of items
     - **Bottom Border**: Adds a colored border to the bottom of items
+    - **Left+Right Borders**: Adds colored borders to both left and right sides
+    - **Top+Bottom Borders**: Adds colored borders to both top and bottom
     - **All Borders**: Adds borders on all sides of items
   - **Border + Background Combinations**:
     - **Left Border + BG**: Combines left border with a matching background
     - **Top Border + BG**: Combines top border with a matching background
     - **Right Border + BG**: Combines right border with a matching background
     - **Bottom Border + BG**: Combines bottom border with a matching background
+    - **Left+Right Borders + BG**: Combines left and right borders with a matching background
+    - **Top+Bottom Borders + BG**: Combines top and bottom borders with a matching background
     - **All Borders + BG**: Combines borders on all sides with a matching background
   - **Bullet Point**: Changes text color and places a matching dot on the right side (with text padding)
 
