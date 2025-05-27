@@ -1,7 +1,7 @@
 {
   "id": "explorer-enhancer",
   "name": "Explorer Enhancer",
-  "version": "v1.0.1",
+  "version": "1.0.1",
   "minAppVersion": "0.15.0",
   "description": "Enhance the file explorer with custom dividers and the ability to hide files and folders.",
   "author": "Erin Skidds",
