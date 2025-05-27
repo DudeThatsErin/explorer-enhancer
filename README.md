@@ -11,6 +11,23 @@ A plugin that enhances Obsidian's file explorer with features like rainbow folde
 - **Sequential Coloring**: Top-level folders always get sequential rainbow colors
 - **Cascading Colors Option**: Choose whether nested items inherit parent colors or get their own colors
 - **Apply Colors to Files**: Optionally apply colors to files based on their parent folder
+- **Color Opacity Control**: Adjust transparency level of applied colors (for background and border styles)
+- **Display Variants**: Choose between different display styles:
+  - **Text Color**: Changes the text color (default)
+  - **Background**: Applies color as a background behind items
+  - **Border Options**:
+    - **Left Border**: Adds a colored border to the left side of items
+    - **Top Border**: Adds a colored border to the top of items
+    - **Right Border**: Adds a colored border to the right side of items
+    - **Bottom Border**: Adds a colored border to the bottom of items
+    - **All Borders**: Adds borders on all sides of items
+  - **Border + Background Combinations**:
+    - **Left Border + BG**: Combines left border with a matching background
+    - **Top Border + BG**: Combines top border with a matching background
+    - **Right Border + BG**: Combines right border with a matching background
+    - **Bottom Border + BG**: Combines bottom border with a matching background
+    - **All Borders + BG**: Combines borders on all sides with a matching background
+  - **Bullet Point**: Changes text color and places a matching dot on the right side (with text padding)
 
 ### Hidden Files & Folders
 - **Hide Specific Items**: Hide individual files or folders from the file explorer

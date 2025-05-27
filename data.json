@@ -1,10 +1,15 @@
 {
   "hiddenFiles": [],
-  "hiddenFolders": [],
+  "hiddenFolders": [
+    "00-assets",
+    "01-clips"
+  ],
   "enableRainbowFolders": true,
-  "rainbowColorScheme": "light",
-  "enableCascadingColors": false,
+  "rainbowColorScheme": "vibrant",
+  "enableCascadingColors": true,
   "applyColorsToFiles": true,
+  "colorOpacity": 0.4,
+  "displayVariant": "all-border-bg",
   "customColors": {
     "light": [
       "#ff6b6b",
@@ -56,7 +61,6 @@
   "enableRainbowSidebar": true,
   "rainbowStyle": "text",
   "increaseContrast": false,
-  "colorOpacity": 50,
   "cascadeColors": true,
   "colorSettings": {
     "background": {

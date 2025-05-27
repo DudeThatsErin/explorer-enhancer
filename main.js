@@ -20,6 +20,8 @@ const DEFAULT_SETTINGS = {
     rainbowColorScheme: 'default',
     enableCascadingColors: true,
     applyColorsToFiles: true,
+    colorOpacity: 1.0,
+    displayVariant: 'text', // 'text', 'background', 'bordered', 'dot'
     customColors: {
         light: [...COLOR_SCHEMES.vibrant],
         dark: [...COLOR_SCHEMES.vibrant]
@@ -208,6 +210,9 @@ class ExplorerEnhancer extends Plugin {
             colors = COLOR_SCHEMES.default;
         }
         
+        // Get opacity value (default to 1.0 if not set)
+        const opacity = this.settings.colorOpacity !== undefined ? this.settings.colorOpacity : 1.0;
+        
         // Create style element
         const styleEl = document.createElement('style');
         styleEl.id = 'explorer-enhancer-rainbow-styles';
@@ -283,17 +288,9 @@ class ExplorerEnhancer extends Plugin {
             // Store top-level folder colors for inheritance
             if (item.type === 'folder') {
                 folderColors.set(item.path, color);
-                css += `
-                    .nav-folder-title[data-path="${this.escapeCssSelector(item.path)}"] {
-                        color: ${color} !important;
-                    }
-                `;
+                css += this.generateVariantCSS('.nav-folder-title', item.path, color, opacity);
             } else if (this.settings.applyColorsToFiles) {
-                css += `
-                    .nav-file-title[data-path="${this.escapeCssSelector(item.path)}"] {
-                        color: ${color} !important;
-                    }
-                `;
+                css += this.generateVariantCSS('.nav-file-title', item.path, color, opacity);
             }
         });
         
@@ -311,17 +308,9 @@ class ExplorerEnhancer extends Plugin {
                 const color = colors[colorIndex];
                 
                 if (item.type === 'folder') {
-                    css += `
-                        .nav-folder-title[data-path="${this.escapeCssSelector(item.path)}"] {
-                            color: ${color} !important;
-                        }
-                    `;
+                    css += this.generateVariantCSS('.nav-folder-title', item.path, color, opacity);
                 } else {
-                    css += `
-                        .nav-file-title[data-path="${this.escapeCssSelector(item.path)}"] {
-                            color: ${color} !important;
-                        }
-                    `;
+                    css += this.generateVariantCSS('.nav-file-title', item.path, color, opacity);
                 }
             });
         } else {
@@ -339,17 +328,9 @@ class ExplorerEnhancer extends Plugin {
                 const parentColor = folderColors.get(topParent) || colors[0];
                 
                 if (item.type === 'folder') {
-                    css += `
-                        .nav-folder-title[data-path="${this.escapeCssSelector(item.path)}"] {
-                            color: ${parentColor} !important;
-                        }
-                    `;
+                    css += this.generateVariantCSS('.nav-folder-title', item.path, parentColor, opacity);
                 } else {
-                    css += `
-                        .nav-file-title[data-path="${this.escapeCssSelector(item.path)}"] {
-                            color: ${parentColor} !important;
-                        }
-                    `;
+                    css += this.generateVariantCSS('.nav-file-title', item.path, parentColor, opacity);
                 }
             });
         }
@@ -470,7 +451,152 @@ class ExplorerEnhancer extends Plugin {
     
     // Helper to escape CSS selectors
     escapeCssSelector(str) {
-        return str.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+        return str.replace(/([!"#$%&'()*+,./:;<=>?@[\]^`{|}~])/g, '\\$1');
+    }
+    
+    // Generate CSS based on display variant
+    generateVariantCSS(selector, path, color, opacity) {
+        const hexColor = color.trim();
+        const escapedPath = this.escapeCssSelector(path);
+        const rgbaColor = this.hexToRgba(hexColor, opacity);
+        
+        switch (this.settings.displayVariant) {
+            case 'background':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        background-color: ${rgbaColor} !important;
+                        border-radius: 4px !important;
+                    }
+                `;
+            case 'bordered':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-left: 3px solid ${hexColor} !important;
+                        padding-left: 4px !important;
+                    }
+                `;
+            case 'top-border':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-top: 3px solid ${hexColor} !important;
+                        padding-top: 2px !important;
+                    }
+                `;
+            case 'right-border':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-right: 3px solid ${hexColor} !important;
+                        padding-right: 4px !important;
+                    }
+                `;
+            case 'bottom-border':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-bottom: 3px solid ${hexColor} !important;
+                        padding-bottom: 2px !important;
+                    }
+                `;
+            case 'all-border':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border: 2px solid ${hexColor} !important;
+                        border-radius: 4px !important;
+                        padding: 2px 4px !important;
+                    }
+                `;
+            case 'bordered-bg':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-left: 3px solid ${hexColor} !important;
+                        background-color: ${rgbaColor} !important;
+                        border-radius: 0 4px 4px 0 !important;
+                        padding-left: 4px !important;
+                    }
+                `;
+            case 'top-border-bg':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-top: 3px solid ${hexColor} !important;
+                        background-color: ${rgbaColor} !important;
+                        border-radius: 0 0 4px 4px !important;
+                        padding-top: 2px !important;
+                    }
+                `;
+            case 'right-border-bg':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-right: 3px solid ${hexColor} !important;
+                        background-color: ${rgbaColor} !important;
+                        border-radius: 4px 0 0 4px !important;
+                        padding-right: 4px !important;
+                    }
+                `;
+            case 'bottom-border-bg':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border-bottom: 3px solid ${hexColor} !important;
+                        background-color: ${rgbaColor} !important;
+                        border-radius: 4px 4px 0 0 !important;
+                        padding-bottom: 2px !important;
+                    }
+                `;
+            case 'all-border-bg':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        border: 2px solid ${hexColor} !important;
+                        background-color: ${rgbaColor} !important;
+                        border-radius: 4px !important;
+                        padding: 2px 4px !important;
+                    }
+                `;
+            case 'dot':
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        color: ${hexColor} !important;
+                        position: relative !important;
+                        padding-right: 20px !important;
+                    }
+                    ${selector}[data-path="${escapedPath}"]::after {
+                        content: '' !important;
+                        position: absolute !important;
+                        right: 8px !important;
+                        top: 0 !important;
+                        bottom: 0 !important;
+                        width: 8px !important;
+                        height: 8px !important;
+                        border-radius: 50% !important;
+                        background-color: ${hexColor} !important;
+                        margin: auto 0 !important;
+                    }
+                `;
+            case 'text':
+            default:
+                return `
+                    ${selector}[data-path="${escapedPath}"] {
+                        color: ${hexColor} !important;
+                    }
+                `;
+        }
+    }
+    
+    // Convert hex color to rgba
+    hexToRgba(hex, opacity) {
+        // Remove the hash if it exists
+        hex = hex.replace('#', '');
+        
+        // Parse the hex values
+        let r, g, b;
+        if (hex.length === 3) {
+            r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+            g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+            b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+        } else {
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
+        }
+        
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
     }
     
     // Update file explorer
@@ -583,14 +709,62 @@ class ExplorerEnhancerSettingTab extends PluginSettingTab {
                     this.plugin.settings.rainbowColorScheme = value;
                     await this.plugin.saveSettings();
                     
-                    // First, immediately update the UI state
-                    if (value === 'custom') {
-                        this.customColorsContainer.style.display = '';
-                    } else {
-                        this.customColorsContainer.style.display = 'none';
+                    // Show/hide custom color settings based on selection
+                    const customSection = containerEl.querySelector('.custom-colors-section');
+                    if (customSection) {
+                        customSection.style.display = value === 'custom' ? 'block' : 'none';
                     }
                     
-                    // Then apply the new color scheme to folders
+                    if (this.plugin.settings.enableRainbowFolders) {
+                        this.plugin.applyRainbowColors();
+                    }
+                });
+            });
+        
+        // Color opacity slider
+        new Setting(containerEl)
+            .setName('Color Opacity')
+            .setDesc('Adjust the opacity/transparency of colors (applies to background and border styles only)')
+            .addSlider(slider => slider
+                .setLimits(0.1, 1.0, 0.1)
+                .setValue(this.plugin.settings.colorOpacity || 1.0)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.colorOpacity = value;
+                    await this.plugin.saveSettings();
+                    
+                    if (this.plugin.settings.enableRainbowFolders) {
+                        this.plugin.applyRainbowColors();
+                    }
+                }));
+                
+        // Display variant dropdown
+        new Setting(containerEl)
+            .setName('Display Style')
+            .setDesc('Choose how colors are displayed in the file explorer')
+            .addDropdown(dropdown => {
+                dropdown.addOption('text', 'Text Color');
+                dropdown.addOption('background', 'Background');
+                // Single borders
+                dropdown.addOption('bordered', 'Left Border');
+                dropdown.addOption('top-border', 'Top Border');
+                dropdown.addOption('right-border', 'Right Border');
+                dropdown.addOption('bottom-border', 'Bottom Border');
+                dropdown.addOption('all-border', 'All Borders');
+                // Borders with backgrounds
+                dropdown.addOption('bordered-bg', 'Left Border + BG');
+                dropdown.addOption('top-border-bg', 'Top Border + BG');
+                dropdown.addOption('right-border-bg', 'Right Border + BG');
+                dropdown.addOption('bottom-border-bg', 'Bottom Border + BG');
+                dropdown.addOption('all-border-bg', 'All Borders + BG');
+                // Bullet point
+                dropdown.addOption('dot', 'Bullet Point');
+                
+                dropdown.setValue(this.plugin.settings.displayVariant || 'text');
+                dropdown.onChange(async (value) => {
+                    this.plugin.settings.displayVariant = value;
+                    await this.plugin.saveSettings();
+                    
                     if (this.plugin.settings.enableRainbowFolders) {
                         this.plugin.applyRainbowColors();
                     }
