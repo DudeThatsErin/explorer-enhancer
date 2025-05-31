@@ -1,19 +1,333 @@
 /* Explorer Enhancer Plugin Styles */
 
-/* 
-  Note: Main divider styling is now dynamically generated in JS 
-  to match the user's file-explorer-dividers.css snippet
+/*
+  Master stylesheet for Explorer Enhancer Plugin
+  Combines all styles from multiple CSS files into a single file
 */
 
-/* Specific styles for file and folder dividers */
-.explorer-enhancer-divider-file {
-    border-left: 3px solid var(--color-accent);
+/* =================== BASE STYLES =================== */
+
+/* Selected text color for dark mode */
+body.theme-dark .nav-file-title.is-active,
+body.theme-dark .nav-folder-title.is-active {
+    color: var(--selected-text-color, #eeeeee) !important;
 }
 
-.explorer-enhancer-divider-folder {
-    border-left: 3px solid var(--color-accent-2, var(--color-accent));
+/* =================== RAINBOW FOLDER STYLES =================== */
+
+/* Styles for rainbow folders will be applied by JavaScript */
+
+/* =================== DIVIDER STYLES =================== */
+
+/* Special styles for critical folder dividers */
+.nav-folder-title[data-path="1 - Tasks"] ~ .nav-folder-children,
+.nav-file-title[data-path="Bugfixes"] {
+    position: relative;
 }
 
+/* Ensure divider shows up between 1 - Tasks and Bugfixes */
+.nav-folder-title[data-path="1 - Tasks"] ~ .nav-folder-children::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--divider-border-color, #ff5555) !important;
+    z-index: 1;
+}
+
+/* Base styles for dividers */
+.nav-folder.explorer-enhancer-divider,
+.nav-file.explorer-enhancer-divider {
+    position: relative;
+    margin-top: 12px !important;
+    margin-bottom: 8px !important;
+    padding: 4px 0;
+    border-width: 0 !important; /* Reset borders so we can apply our custom ones */
+}
+
+/* Remove margin/padding for middle border specifically */
+.nav-folder.explorer-enhancer-divider[data-border-position="middle"],
+.nav-file.explorer-enhancer-divider[data-border-position="middle"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+
+/* Force display of dividers and their children */
+.nav-folder.explorer-enhancer-divider,
+.nav-file.explorer-enhancer-divider,
+.nav-folder.explorer-enhancer-divider > .nav-folder-title,
+.nav-file.explorer-enhancer-divider > .nav-file-title,
+.divider-text,
+.divider-line {
+    display: block !important;
+}
+
+/* Bottom border - this is the default border position */
+.nav-folder.explorer-enhancer-divider[data-border-position="bottom"],
+.nav-file.explorer-enhancer-divider[data-border-position="bottom"] {
+    border-bottom: var(--divider-border-size, 2px) solid var(--divider-border-color, #888888) !important;
+    padding-bottom: 6px !important;
+}
+
+/* Top border */
+.nav-folder.explorer-enhancer-divider[data-border-position="top"],
+.nav-file.explorer-enhancer-divider[data-border-position="top"] {
+    border-top: var(--divider-border-size, 2px) solid var(--divider-border-color, #888888) !important;
+    padding-top: 6px !important;
+}
+
+/* Left border */
+.nav-folder.explorer-enhancer-divider[data-border-position="left"],
+.nav-file.explorer-enhancer-divider[data-border-position="left"] {
+    border-left: var(--divider-border-size, 2px) solid var(--divider-border-color, #888888) !important;
+    padding-left: 6px !important;
+}
+
+/* Right border */
+.nav-folder.explorer-enhancer-divider[data-border-position="right"],
+.nav-file.explorer-enhancer-divider[data-border-position="right"] {
+    border-right: var(--divider-border-size, 2px) solid var(--divider-border-color, #888888) !important;
+    padding-right: 6px !important;
+}
+
+/* All sides border */
+.nav-folder.explorer-enhancer-divider[data-border-position="all"],
+.nav-file.explorer-enhancer-divider[data-border-position="all"] {
+    border: var(--divider-border-size, 2px) solid var(--divider-border-color, #888888) !important;
+    padding: 6px !important;
+    border-radius: 4px !important;
+}
+
+/* Custom text for dividers */
+.nav-folder.explorer-enhancer-divider[data-divider-text]::before,
+.nav-file.explorer-enhancer-divider[data-divider-text]::before {
+    content: attr(data-divider-text);
+    display: block !important;
+    font-size: 0.85em;
+    color: var(--divider-border-color, #888888);
+    padding-bottom: 4px;
+    text-align: center;
+    width: var(--divider-width, 100%);
+    font-weight: 600;
+}
+
+/* Make dividers more visible with background highlight */
+.nav-folder.explorer-enhancer-divider > .nav-folder-title,
+.nav-file.explorer-enhancer-divider > .nav-file-title {
+    background-color: rgba(var(--background-modifier-hover-rgb), 0.05);
+}
+
+/* Make file explorer dividers stand out */
+.nav-folder.mod-root > .nav-folder-children > .explorer-enhancer-divider {
+    background-color: var(--background-secondary-alt);
+    font-weight: bold;
+}
+
+/* Specific selector for "1 - Tasks" folder to ensure it gets divider styling */
+.nav-folder-children > .nav-folder > .nav-folder-title[data-path*="1 - Tasks"],
+.nav-folder-children > .nav-folder:first-child > .nav-folder-title {
+    border-bottom: 3px solid #c04040 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 8px !important;
+    position: relative !important;
+}
+
+/* Add space after 1-Tasks folder and ensure divider shows between Tasks and Bugfixes */
+.nav-folder-children > .nav-folder:first-child {
+    margin-bottom: 15px !important;
+    border-bottom: 3px solid #c04040 !important;
+    padding-bottom: 5px !important;
+}
+
+/* Critical fix: Specifically target the Tasks folder to ensure divider shows */
+.nav-folder-children > .nav-folder-title:has(+ .nav-folder > .nav-folder-title span:contains("Bugfixes")),
+.nav-folder-children div[data-path="1 - Tasks"],
+.nav-folder-title:has(span:contains("1 - Tasks")) + .nav-folder,
+.nav-folder:has(.nav-folder-title span:contains("1 - Tasks")) + .nav-folder:has(.nav-folder-title span:contains("Bugfixes")),
+.nav-folder:has(.nav-folder-title:contains("1 - Tasks")) ~ .nav-folder:has(.nav-folder-title:contains("Bugfixes")),
+.nav-folder-children > .nav-folder:first-child + .nav-folder {
+    border-top: 4px solid #c04040 !important;
+    margin-top: 10px !important;
+    padding-top: 10px !important;
+    position: relative !important;
+}
+
+/* Add Bugfixes indicator */
+.nav-folder:has(.nav-folder-title span:contains("Bugfixes")) {
+    position: relative !important;
+}
+
+.nav-folder:has(.nav-folder-title span:contains("Bugfixes"))::before {
+    content: "";
+    position: absolute !important;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: #c04040 !important;
+    z-index: 10 !important;
+}
+
+/* Make sure dividers show up even if class is missing */
+.nav-folder-title[data-path="1 - Tasks"],
+.nav-folder-title:has(span:contains("1 - Tasks")),
+.nav-folder-title:has(span:contains("Tasks")) {
+    border-bottom: 3px solid #c04040 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+/* Custom text dividers */
+.nav-folder.explorer-enhancer-divider[data-divider-text]::before,
+.nav-file.explorer-enhancer-divider[data-divider-text]::before {
+    content: attr(data-divider-text);
+    display: block;
+    font-size: 0.85em;
+    color: var(--divider-border-color, #888888);
+    padding-bottom: 4px;
+    text-align: center;
+    width: var(--divider-width, 100%);
+    font-weight: 600;
+}
+
+/* Individual divider styling through CSS variables */
+.nav-folder.explorer-enhancer-divider,
+.nav-file.explorer-enhancer-divider {
+    --divider-border-color: var(--divider-border-color, #888888);
+    --divider-border-size: var(--divider-border-size, 1px);
+    --divider-width: var(--divider-width, 100%);
+}
+
+/* =================== BORDER POSITION STYLES =================== */
+
+/* Top border */
+.nav-folder.explorer-enhancer-divider[data-border-position="top"],
+.nav-file.explorer-enhancer-divider[data-border-position="top"] {
+    border-top: var(--divider-border-size, 1px) solid var(--divider-border-color, #888888);
+    padding-top: 6px;
+}
+
+/* Bottom border */
+.nav-folder.explorer-enhancer-divider[data-border-position="bottom"],
+.nav-file.explorer-enhancer-divider[data-border-position="bottom"] {
+    border-bottom: var(--divider-border-size, 1px) solid var(--divider-border-color, #888888);
+    padding-bottom: 6px;
+}
+
+/* Left border */
+.nav-folder.explorer-enhancer-divider[data-border-position="left"],
+.nav-file.explorer-enhancer-divider[data-border-position="left"] {
+    border-left: var(--divider-border-size, 1px) solid var(--divider-border-color, #888888);
+    padding-left: 6px;
+    border-left-style: solid;
+}
+
+/* Right border */
+.nav-folder.explorer-enhancer-divider[data-border-position="right"],
+.nav-file.explorer-enhancer-divider[data-border-position="right"] {
+    border-right: var(--divider-border-size, 1px) solid var(--divider-border-color, #888888);
+    padding-right: 6px;
+    border-right-style: solid;
+}
+
+/* All sides border */
+.nav-folder.explorer-enhancer-divider[data-border-position="all"],
+.nav-file.explorer-enhancer-divider[data-border-position="all"] {
+    border: var(--divider-border-size, 1px) solid var(--divider-border-color, #888888);
+    padding: 0 6px;
+    border-radius: 4px;
+    border-style: solid;
+    box-sizing: border-box;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+
+/* Middle border */
+.nav-folder.explorer-enhancer-divider[data-border-position="middle"],
+.nav-file.explorer-enhancer-divider[data-border-position="middle"] {
+    /* Remove all margin/padding from parent, but line will be drawn on the title */
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+}
+
+.nav-folder-title[data-divider-middle],
+.nav-file-title[data-divider-middle] {
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative;
+}
+
+.nav-folder-title[data-divider-middle]::after,
+.nav-file-title[data-divider-middle]::after {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 36px; /* Indent to start after icon (adjust if needed) */
+    right: 8px; /* Stop before right edge */
+    top: 70%; /* Slightly below center, so it doesn't cross out text */
+    height: 0;
+    border-top: 2px solid var(--divider-border-color, #888888);
+    z-index: 1;
+    pointer-events: none;
+}
+
+
+.nav-folder.explorer-enhancer-divider[data-border-position="middle"]::after,
+.nav-file.explorer-enhancer-divider[data-border-position="middle"]::after {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    border-top: 2px solid var(--divider-border-color, #888888);
+    z-index: -1;
+}
+
+
+/* Line for middle position dividers */
+.divider-line {
+    flex-grow: 1;
+    height: var(--divider-border-size, 1px);
+    background-color: var(--divider-border-color, #888888);
+    margin-left: 10px;
+    width: var(--divider-width, 100%);
+}
+
+/* Middle border position with ::after */
+.nav-folder.explorer-enhancer-divider[data-border-position="middle"]::after,
+.nav-file.explorer-enhancer-divider[data-border-position="middle"]::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    height: 0;
+    border-top: 1px solid currentColor;
+    z-index: -1;
+    flex-grow: 1;
+    margin-left: 10px;
+}
+
+/* No border */
+.nav-folder.explorer-enhancer-divider[data-border-position="none"],
+.nav-file.explorer-enhancer-divider[data-border-position="none"] {
+    border: none;
+    padding: 2px 0;
+}
+
+/* =================== SETTINGS UI STYLES =================== */
+
+/* Containers for settings sections */
 .hidden-files-container, 
 .hidden-folders-container, 
 .dividers-container {
@@ -25,6 +339,7 @@
     padding: 10px;
 }
 
+/* File path display in settings */
 .explorer-enhancer-file-path {
     font-family: var(--font-monospace);
     font-size: 0.9em;
@@ -37,19 +352,16 @@
     padding: 10px 0;
 }
 
-/* Make file explorer dividers stand out */
-.nav-folder.mod-root > .nav-folder-children > .explorer-enhancer-divider {
-    background-color: var(--background-secondary-alt);
-    font-weight: bold;
-}
+/* =================== WARNING MODAL STYLES =================== */
 
-/* Warning modal styles with mobile support */
+/* Modal container */
 .modal {
     max-width: 90vw;
     width: 500px;
     max-height: 80vh;
 }
 
+/* List of affected dividers */
 .affected-dividers-list {
     max-height: 40vh;
     overflow-y: auto;
@@ -59,6 +371,7 @@
     padding: 12px;
 }
 
+/* Individual divider item in list */
 .divider-item {
     padding: 8px 0;
     border-bottom: 1px solid var(--background-modifier-border);
@@ -71,17 +384,20 @@
     border-bottom: none;
 }
 
+/* Divider information display */
 .divider-info {
     font-family: var(--font-monospace);
     font-size: 0.9em;
 }
 
+/* Warning text styling */
 .warning-text {
     color: var(--text-error);
     font-weight: bold;
     margin: 12px 0;
 }
 
+/* Button container in modals */
 .button-container {
     display: flex;
     justify-content: flex-end;
@@ -102,6 +418,8 @@
     background-color: var(--background-modifier-error);
     color: var(--text-on-accent);
 }
+
+/* =================== RESPONSIVE STYLES =================== */
 
 /* Media queries for small screens */
 @media screen and (max-width: 600px) {

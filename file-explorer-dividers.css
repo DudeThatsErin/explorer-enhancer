@@ -1,9 +1,8 @@
 /* File Explorer Dividers  */
 .nav-folder:has(> :is(
-        [data-path="FOLDERNAME1"],
-        [data-path="FOLDERNAME2"],
-		[data-path="FOLDERNAME3"],
-    )), .nav-file:has(> :is([data-path="FILENAME1"], [data-path="FILENAME2"], [data-path="FILENAME3"])) {
+        [data-path="00-assets"],
+		[data-path="01-clips"],
+    )), .nav-file:has(> :is([data-path="1 - Tasks.md"],[data-path="SCRATCHPAD.md"])) {
 	position: relative;
 
 	&::before {
@@ -27,16 +26,14 @@
 	}
 }
 
-.nav-folder:has(> [data-path="FOLDERNAME1"])::before { content: "FOLDERNAME1"; }
-.nav-folder:has(> [data-path="FOLDERNAME2"])::before { content: "FOLDERNAME2"; }
-.nav-folder:has(> [data-path="FOLDERNAME3"])::before { content: "FOLDERNAME3"; }
-.nav-file:has(> :is([data-path="FILENAME1"], [data-path="FILENAME2"], [data-path="FILENAME3"]))::before { content: "FILENAME1"; }
+.nav-folder:has(> [data-path="00-assets"])::before { content: "📦 Storage 📦"; }
+.nav-folder:has(> [data-path="01-clips"])::before { content: "♡ Clippings ♡"; }
+.nav-file:has(> [data-path="SCRATCHPAD.md"])::before { content: "» Scratchpad «"; }
+.nav-file:has(> [data-path="1 - Tasks.md"])::before { content: "☆ Tasks ☆"; }
 
 /* files */
-.nav-file:has(> :is(
-        [data-path="FILENAME1"],
-        [data-path="FILENAME2"],
-        [data-path="FILENAME3"]
+/* .nav-file:has(> :is(
+        [data-path="LICENSE"]
     )) {
 	position: relative;
 
@@ -46,7 +43,7 @@
 		margin-inline-start: calc(24px - var(--padding-x));
 		padding: 0 var(--padding-x);
 		background-color: var(--background-secondary);
-		/*background-color: #262626;*/
+		/*background-color: #262626;
 	}
 
 	&::after {
@@ -54,9 +51,9 @@
 		display: block;
 		position: absolute;
 		top: calc(0.5em * var(--line-height-tight));
-		width: 100%; /* change for something smaller if you don't want the divider to span full length */
+		width: 100%; /* change for something smaller if you don't want the divider to span full length 
 		height: 0;
 		border-top: 1px solid currentColor;
 		z-index: -1;
 	}
-}
+} */
