@@ -5,12 +5,12 @@
     "01-clips"
   ],
   "enableRainbowFolders": true,
-  "rainbowColorScheme": "vibrant",
+  "rainbowColorScheme": "light",
   "enableCascadingColors": true,
   "applyColorsToFiles": true,
-  "colorOpacity": 0.5,
-  "displayVariant": "bordered-bg",
-  "textColorOption": "white",
+  "colorOpacity": 0.4,
+  "displayVariant": "all-border-bg",
+  "textColorOption": "default",
   "customTextColor": "#bc4e4e",
   "selectedTextColor": "#eeeeee",
   "customColors": {
