@@ -1,6 +1,17 @@
+/**
+ * Import required modules from Obsidian API
+ * - Plugin: Base class for Obsidian plugins
+ * - PluginSettingTab: Base class for plugin settings tabs
+ * - Setting: UI component for creating setting elements
+ * - ItemView: Base class for creating custom views
+ * - WorkspaceLeaf: Container for views in the workspace
+ */
 const { Plugin, PluginSettingTab, Setting, ItemView, WorkspaceLeaf } = require('obsidian');
 
-// View type for the settings tab
+/**
+ * Constant defining the unique view type identifier for the settings tab
+ * Used to register and identify the plugin's settings view in the workspace
+ */
 const EXPLORER_ENHANCER_SETTINGS_VIEW = 'explorer-enhancer-settings-view';
 
 // Function to get text colors dynamically, always including custom option
@@ -143,7 +154,11 @@ const getColorSchemes = (settings) => {
 const DIVIDER_STYLES = ['middleLeft', 'middleCenter', 'middleRight', 'top', 'bottom', 'left', 'right', 'all', 'none', 'allBG', 'BG', 'topBG', 'bottomBG', 'leftBG', 'rightBG', 'text-only'];
 
 
-// Default settings
+/**
+ * Default configuration settings for the plugin
+ * These values are used when the plugin is first installed
+ * or if any settings are missing from the saved configuration
+ */
 const DEFAULT_SETTINGS = {
     hiddenFiles: [],
     hiddenFolders: [],
@@ -185,41 +200,69 @@ const DEFAULT_SETTINGS = {
 };
 
 class ExplorerEnhancer extends Plugin {
+    /**
+     * Object to store the plugin's settings
+     * Initialized with default settings
+     */
     settings = Object.assign({}, DEFAULT_SETTINGS);
+    
+    /**
+     * MutationObserver to watch for changes in the file explorer
+     * Used to reapply styles when the explorer content changes
+     */
     fileExplorerObserver = null;
     
+    /**
+     * Loads user settings from Obsidian's data storage
+     * Merges saved settings with defaults to ensure all properties exist
+     * @returns {Promise<void>} Promise that resolves when settings are loaded
+     */
     async loadSettings() {
+        // Combine default settings with any saved user settings
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     }
 
+    /**
+     * Initializes the plugin when Obsidian loads it
+     * Sets up settings, commands, styles, and UI elements
+     * @returns {Promise<void>} Promise that resolves when initialization is complete
+     */
     async onload() {
+        // Log initialization message for debugging
         console.log('Loading Explorer Enhancer plugin');
         
         // We'll implement settings directly without requiring external modules
         // to avoid module loading issues
         
-        // Load settings
+        // Load user settings and perform initialization/migration
         try {
+            // Load saved data from Obsidian storage
             const data = await this.loadData();
             if (data) {
                 // Create a deep merge of default settings and loaded data
+                // This ensures all new settings are properly initialized when upgrading
                 this.settings = this.mergeSettings(DEFAULT_SETTINGS, data);
                 
                 // Initialize selected text color if not set
+                // This setting was added later, so might be missing in older installations
                 if (!this.settings.selectedTextColor) {
                     this.settings.selectedTextColor = DEFAULT_SETTINGS.selectedTextColor;
                 }
                 
-                // Ensure custom colors exist
+                // Ensure custom colors exist and are properly initialized
+                // This handles the case where the user's settings might be missing these
                 if (!this.settings.customColors) {
+                    // If customColors is completely missing, initialize with defaults
                     this.settings.customColors = {
-                        light: [...COLOR_SCHEMES.vibrant],
-                        dark: [...COLOR_SCHEMES.vibrant]
+                        light: [...COLOR_SCHEMES.vibrant], // Use vibrant scheme for light theme
+                        dark: [...COLOR_SCHEMES.vibrant]  // Use vibrant scheme for dark theme
                     };
                 }
+                // If only the light theme colors are missing, initialize them
                 if (!this.settings.customColors.light) {
                     this.settings.customColors.light = [...getColorSchemes(this.settings).vibrant];
                 }
+                // If only the dark theme colors are missing, initialize them
                 if (!this.settings.customColors.dark) {
                     this.settings.customColors.dark = [...getColorSchemes(this.settings).vibrant];
                 }
@@ -320,16 +363,15 @@ class ExplorerEnhancer extends Plugin {
                 }
             }
         } catch (error) {
+            // Log any errors during settings loading
             console.error('Error loading settings:', error);
         }
         
-        // Ensure divider settings are initialized and migrated
-        this.initializeDividerSettings();
-        
-        // Initialize plugin styles and features
+        // Initialize plugin styles, observers, and event listeners
+        // This is a separate method that handles all the UI setup
         this.initialize();
         
-        // Register views
+        // Register views and settings tab with Obsidian
         this.registerView(
             EXPLORER_ENHANCER_SETTINGS_VIEW,
             (leaf) => (this.settingsView = new ExplorerEnhancerSettingsView(leaf, this))
@@ -913,27 +955,34 @@ class ExplorerEnhancer extends Plugin {
     }
     
     onunload() {
+        // Log unloading for debugging purposes
         console.log('Unloading Explorer Enhancer plugin');
         
-        // Remove styles
-        this.removeStyles();
-        this.removeRainbowStyles();
-        this.removeColorPickerStyles();
-        this.removeDividerStyles();
+        // Remove all CSS styles added by the plugin
+        this.removeStyles();           // General styles
+        this.removeRainbowStyles();    // Rainbow folder colors
+        this.removeColorPickerStyles(); // Color picker UI
+        // Divider styles removed as feature is disabled
         
-        // Unhide all elements
+        // Unhide any elements that were hidden by the plugin
+        // This ensures no files or folders remain hidden when plugin is disabled
         document.querySelectorAll('.explorer-enhancer-hidden').forEach(el => {
-            el.classList.remove('explorer-enhancer-hidden');
-            el.style.display = '';
+            el.classList.remove('explorer-enhancer-hidden'); // Remove marker class
+            el.style.display = ''; // Remove inline display:none style
         });
         
-        // Disconnect observer
+        // Disconnect the mutation observer to stop watching file explorer
         if (this.fileExplorerObserver) {
             this.fileExplorerObserver.disconnect();
             this.fileExplorerObserver = null;
         }
     }
     
+    /**
+     * Saves the current settings to Obsidian's data storage
+     * Called whenever settings are changed to persist them
+     * @returns {Promise<void>} Promise that resolves when settings are saved
+     */
     async saveSettings() {
         await this.saveData(this.settings);
         
@@ -953,26 +1002,32 @@ class ExplorerEnhancer extends Plugin {
     
     // Add color picker styles
     addColorPickerStyles() {
+        // Create a style element for the color picker CSS
         const styleEl = document.createElement('style');
-        styleEl.id = 'explorer-enhancer-color-picker-styles';
+        styleEl.id = 'explorer-enhancer-color-picker-styles'; // ID for later removal
+        
+        // Define CSS for color swatches and UI
         styleEl.textContent = `
+            /* Individual color swatch styling */
             .explorer-enhancer-color-swatch {
-                width: 24px !important;
-                height: 24px !important;
-                border-radius: 50% !important;
-                margin: 4px !important;
-                cursor: pointer !important;
-                border: 2px solid transparent !important;
-                transition: transform 0.2s ease, border-color 0.2s ease !important;
-                position: relative !important;
-                display: inline-block !important;
+                width: 24px !important;               /* Fixed width for all swatches */
+                height: 24px !important;              /* Fixed height for all swatches */
+                border-radius: 50% !important;        /* Round shape */
+                margin: 4px !important;               /* Spacing between swatches */
+                cursor: pointer !important;           /* Show pointer cursor on hover */
+                border: 2px solid transparent !important; /* Transparent border by default */
+                transition: transform 0.2s ease, border-color 0.2s ease !important; /* Smooth animations */
+                position: relative !important;        /* For proper positioning */
+                display: inline-block !important;     /* Display in line with other swatches */
             }
             
+            /* Hover effect for color swatches */
             .explorer-enhancer-color-swatch:hover {
-                transform: scale(1.1) !important;
-                border-color: var(--text-normal) !important;
+                transform: scale(1.1) !important;      /* Slightly enlarge on hover */
+                border-color: var(--text-normal) !important; /* Show border in theme color */
             }
             
+            /* Active/selected swatch styling */
             .explorer-enhancer-color-swatch.active {
                 border-color: var(--text-normal) !important;
                 transform: scale(1.1) !important;
@@ -1002,31 +1057,58 @@ class ExplorerEnhancer extends Plugin {
         document.head.appendChild(styleEl);
     }
     
-    // Remove color picker styles
+    /**
+     * Removes the color picker's custom styles from the document
+     * This method is called during plugin cleanup or when the color picker
+     * is no longer needed, ensuring that its styles don't persist
+     * and potentially conflict with other elements.
+     * 
+     * @returns {void}
+     */
     removeColorPickerStyles() {
+        // Find the style element containing color picker styles by its unique ID
         const styleEl = document.getElementById('explorer-enhancer-color-picker-styles');
+        // Remove it from the DOM if it exists
         if (styleEl) styleEl.remove();
     }
     
-    // Add styles for hidden elements
+    /**
+     * Adds CSS styles for hiding elements in the file explorer
+     * This method creates and injects a style element containing the CSS rules
+     * needed to hide files and folders based on the user's settings.
+     * It first removes any existing styles to prevent duplication.
+     * 
+     * @returns {void}
+     */
     addHiddenStyles() {
-        // Remove existing styles
+        // First remove any existing styles to avoid conflicts
+        // This ensures we don't have duplicate style elements
         this.removeStyles();
         
-        // Create style element
+        // Create a new style element for our CSS rules
         const styleEl = document.createElement('style');
+        // Set a unique ID so we can find and remove it later
         styleEl.id = 'explorer-enhancer-styles';
+        // Define the CSS rule to hide elements with our marker class
+        // The !important flag ensures our rule takes precedence over other styles
         styleEl.textContent = `
             .explorer-enhancer-hidden {
                 display: none !important;
             }
         `;
+        // Add the style element to the document head to apply the styles
         document.head.appendChild(styleEl);
     }
     
-    // Remove styles
+    /**
+     * Removes general plugin styles from the document
+     * Cleans up the main style element used by the plugin
+     * @returns {void}
+     */
     removeStyles() {
+        // Find the plugin's main style element by its unique ID
         const styleEl = document.getElementById('explorer-enhancer-styles');
+        // Remove it from the DOM if it exists
         if (styleEl) styleEl.remove();
     }
     
@@ -1288,6 +1370,7 @@ applyInlineRainbowStyles() {
             const textColors = getTextColors(this.settings),
                   textColor = textColors[this.settings.textColor] || this.settings.customTextColor;
             
+            // If we have a valid text color, apply it to all folder and file titles
             if (textColor) {
                 // Apply to all folder and file titles
                 const elements = document.querySelectorAll('.nav-folder-title, .nav-file-title');
@@ -1731,12 +1814,18 @@ applyInlineRainbowStyles() {
         console.log('Successfully redirected to wrapper-based styling');
     }
     
-    // Remove rainbow styles
+    /**
+     * Removes all rainbow coloring styles from the document
+     * This method cleans up the rainbow color styling when the plugin is disabled or when settings change
+     * It identifies the style element by its unique ID and removes it from the DOM
+     * @returns {void}
+     */
     removeRainbowStyles() {
         console.log('Removing rainbow styles');
         
         // Remove any style element
         const styleEl = document.getElementById('explorer-enhancer-rainbow-styles');
+        // Remove the element from the DOM if it exists
         if (styleEl) styleEl.remove();
         
         // Remove wrapper-based styles
@@ -1771,7 +1860,9 @@ applyInlineRainbowStyles() {
     updateHiddenElements() {
         // Always unhide all elements first
         document.querySelectorAll('.explorer-enhancer-hidden').forEach(el => {
+            // Remove the marker class that identifies hidden elements
             el.classList.remove('explorer-enhancer-hidden');
+            // Clear the display style to allow the element to show normally
             el.style.display = '';
         });
         
@@ -1844,21 +1935,27 @@ applyInlineRainbowStyles() {
         // For backward compatibility, still process hiddenFiles and hiddenFolders
         // Process hidden files
         if (this.settings.hiddenFiles && this.settings.hiddenFiles.length > 0) {
+            // Iterate through each file path in the hidden files list
             this.settings.hiddenFiles.forEach(file => {
-                // Try exact match
+                // First, try an exact match with the file path
+                // The escapeCssSelector method handles special characters in paths that would break CSS selectors
                 let elements = document.querySelectorAll(`.nav-file-title[data-path="${this.escapeCssSelector(file)}"]`);
                 
-                // Try with .md extension if needed
+                // If no match found and the file doesn't have an extension,
+                // try again with .md extension (common for Markdown notes in Obsidian)
                 if (elements.length === 0 && !file.includes('.')) {
                     elements = document.querySelectorAll(`.nav-file-title[data-path="${this.escapeCssSelector(file)}.md"]`);
                 }
                 
-                // Hide all matching elements
+                // Apply hiding to all matching elements
                 elements.forEach(el => {
+                    // Mark the element as hidden with our custom class
                     el.classList.add('explorer-enhancer-hidden');
+                    // Actually hide it with CSS display:none
                     el.style.display = 'none';
                     
-                    // Also hide parent nav-file
+                    // Also hide the parent container element (nav-file)
+                    // This prevents empty space where the file would be
                     const parent = el.closest('.nav-file');
                     if (parent) {
                         parent.classList.add('explorer-enhancer-hidden');
@@ -1868,18 +1965,23 @@ applyInlineRainbowStyles() {
             });
         }
         
-        // Process hidden folders
+        // Process folders that should be hidden according to user settings
         if (this.settings.hiddenFolders && this.settings.hiddenFolders.length > 0) {
+            // Iterate through each folder path in the hidden folders list
             this.settings.hiddenFolders.forEach(folder => {
-                // Find folder elements
+                // Find folder title elements matching the path
+                // The escapeCssSelector method handles special characters in paths
                 const folderElements = document.querySelectorAll(`.nav-folder-title[data-path="${this.escapeCssSelector(folder)}"]`);
                 
-                // Hide folder elements
+                // Apply hiding to all matching folder elements
                 folderElements.forEach(el => {
+                    // Mark the element as hidden with our custom class
                     el.classList.add('explorer-enhancer-hidden');
+                    // Actually hide it with CSS display:none
                     el.style.display = 'none';
                     
-                    // Also hide parent nav-folder
+                    // Also hide the parent folder container (nav-folder)
+                    // This hides the entire folder including its collapse arrow
                     const parent = el.closest('.nav-folder');
                     if (parent) {
                         parent.classList.add('explorer-enhancer-hidden');
@@ -1887,15 +1989,19 @@ applyInlineRainbowStyles() {
                     }
                 });
                 
-                // Hide folder children
+                // Also hide all children of the hidden folder
+                // This ensures that if the folder is expanded, its contents won't show
                 const prefix = folder + '/';
                 document.querySelectorAll('.nav-file-title, .nav-folder-title').forEach(el => {
+                    // Get the path attribute to check if it's within the hidden folder
                     const path = el.getAttribute('data-path');
+                    // If the path starts with the folder prefix, it's a child of the hidden folder
                     if (path && path.startsWith(prefix)) {
+                        // Mark as hidden and hide with CSS
                         el.classList.add('explorer-enhancer-hidden');
                         el.style.display = 'none';
                         
-                        // Also hide parent element
+                        // Also hide the parent container element (could be file or subfolder)
                         const parent = el.closest('.nav-file, .nav-folder');
                         if (parent) {
                             parent.classList.add('explorer-enhancer-hidden');
@@ -1907,7 +2013,22 @@ applyInlineRainbowStyles() {
         }
     }
     
-    // Setup observer
+    /**
+     * Sets up a MutationObserver to watch for changes in the file explorer
+     * 
+     * This method creates and configures an observer that monitors the file explorer DOM
+     * for changes and automatically reapplies styling when changes occur. It handles:
+     * - Disconnecting any existing observer to prevent duplicates
+     * - Finding the file explorer container in the DOM
+     * - Creating a new MutationObserver that triggers when content changes
+     * - Configuring the observer to reapply rainbow colors, hidden elements, and dividers
+     * 
+     * The observer ensures that visual enhancements persist when the file explorer content
+     * changes, such as when files are added/removed or folders are expanded/collapsed.
+     * This is essential for maintaining a consistent visual experience in the explorer.
+     * 
+     * @returns {void}
+     */
     setupFileExplorerObserver() {
         // Remove existing observer
         if (this.fileExplorerObserver) {
@@ -1949,9 +2070,6 @@ applyInlineRainbowStyles() {
             attributes: true,
             attributeFilter: ['data-path']
         });
-        
-        // Initial application of divider attributes
-        this.applyDividerAttributes();
     }
     
     // Apply divider attributes to specific files and folders
@@ -2182,41 +2300,65 @@ applyInlineRainbowStyles() {
         return path.replace(/[^a-zA-Z0-9]/g, '_');
     }
     
-    // Helper to escape CSS selectors
+    /**
+     * Helper method to escape special characters in CSS selectors
+     * This is crucial when using file/folder paths in CSS selectors, as paths often contain
+     * characters that have special meaning in CSS (like dots, spaces, brackets, etc.)
+     * Without proper escaping, these would break the CSS selector syntax
+     * @param {string} str - The string to escape for use in CSS selectors
+     * @returns {string} The escaped string safe for use in CSS selectors
+     */
     escapeCssSelector(str) {
         return str.replace(/[ !#$%&'()*+,./:;<=>?@\[\]^`{|}~"]/g, '\\$&');
     }
     
-    // Helper for deep merging of settings objects
+    /**
+     * Performs a deep merge of user settings with default settings
+     * This is crucial for handling plugin updates where new settings might be added
+     * The method ensures that user's existing settings are preserved while adding
+     * any new default settings that might not exist in the user's configuration
+     *
+     * @param {Object} defaultSettings - The default settings object with all possible settings
+     * @param {Object} loadedSettings - The user's saved settings that need to be merged
+     * @returns {Object} A new object containing the merged settings
+     */
     mergeSettings(defaultSettings, loadedSettings) {
-        // Start with a shallow copy of default settings
+        // Start with a shallow copy of default settings as the base
+        // This ensures we always have all default settings as a starting point
         const result = Object.assign({}, defaultSettings);
         
-        // If no loaded settings, return defaults
+        // If no loaded settings exist, just return the defaults
+        // This handles the case of first-time plugin usage
         if (!loadedSettings) return result;
         
-        // For each property in loaded settings
+        // Iterate through each property in the loaded settings
         for (const key in loadedSettings) {
-            // Skip if property doesn't exist in loaded settings
+            // Skip properties that don't exist in loaded settings
+            // This uses hasOwnProperty to avoid iterating over prototype properties
             if (!loadedSettings.hasOwnProperty(key)) continue;
             
-            // Get the values from both objects
+            // Get the corresponding values from both settings objects
             const defaultValue = result[key];
             const loadedValue = loadedSettings[key];
             
-            // If both values are objects and not arrays, recursively merge
+            // Special handling for nested objects (but not arrays)
+            // If both values are plain objects, we recursively merge them
+            // This allows deep merging of nested configuration objects
             if (
                 defaultValue && loadedValue &&
                 typeof defaultValue === 'object' && typeof loadedValue === 'object' &&
                 !Array.isArray(defaultValue) && !Array.isArray(loadedValue)
             ) {
+                // Recursively merge nested objects
                 result[key] = this.mergeSettings(defaultValue, loadedValue);
             } else {
-                // Otherwise, use the loaded value
+                // For non-objects or arrays, use the user's loaded value
+                // This preserves user preferences for simple values and arrays
                 result[key] = loadedValue;
             }
         }
         
+        // Return the fully merged settings object
         return result;
     }
     
@@ -2389,23 +2531,41 @@ applyInlineRainbowStyles() {
     
     // Helper function to convert hex color to rgba
     hexToRgba(hex, opacity) {
+        // Return transparent color if no hex code provided
         if (!hex) return 'rgba(0,0,0,0)';
         
         // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+        // This handles 3-digit hex codes by duplicating each digit
         const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
         hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
         
+        // Extract the R, G, B components using regex
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        // Return transparent color if the regex didn't match (invalid hex code)
         if (!result) return 'rgba(0,0,0,0)';
         
+        // Convert hexadecimal values to decimal (0-255)
         const r = parseInt(result[1], 16);
         const g = parseInt(result[2], 16);
         const b = parseInt(result[3], 16);
         
+        // Return the color in rgba() format
         return `rgba(${r}, ${g}, ${b}, ${opacity})`;
     }
     
-    // Remove divider styles
+    /**
+     * Simplified version of removeDividerStyles that only removes the global CSS styles
+     * 
+     * This is a lightweight version of the more comprehensive removeDividerStyles method above.
+     * While the full implementation removes both the style element and all element-specific attributes,
+     * this simplified version only removes the global style element containing divider CSS rules.
+     * 
+     * This version is used in contexts where we only need to refresh the styles without
+     * removing the individual element attributes and classes, such as when toggling settings
+     * or changing theme modes.
+     * 
+     * @returns {void}
+     */
     removeDividerStyles() {
         try {
             const styleEl = document.getElementById('explorer-enhancer-divider-styles');
@@ -2417,10 +2577,23 @@ applyInlineRainbowStyles() {
         }
     }
     
-    // Generate CSS based on display variant
+    /**
+     * Generates CSS rules for coloring files and folders based on the selected display variant
+     * This method creates the specific CSS rules needed to apply visual styling to elements
+     * in the file explorer. It handles different display variants like backgrounds and borders.
+     * 
+     * @param {string} selector - The CSS selector to target (.nav-folder-title or .nav-file-title)
+     * @param {string} path - The file or folder path to apply styling to
+     * @param {string} color - The hex color code to use for styling
+     * @param {number} opacity - The opacity level (0-1) for background colors
+     * @returns {string} CSS rules as a string that can be added to a style element
+     */
     generateVariantCSS(selector, path, color, opacity) {
+        // Clean up any whitespace from the color string
         const hexColor = color.trim();
+        // Escape special characters in the path for use in CSS selectors
         const escapedPath = this.escapeCssSelector(path);
+        // Convert the hex color to rgba format for transparency support
         const rgbaColor = this.hexToRgba(hexColor, opacity);
         
         // Debug the current display variant
@@ -4475,6 +4648,8 @@ class ExplorerEnhancerSettingTab extends PluginSettingTab {
 
 
 // Settings View for displaying settings in a tab
+// Settings View for displaying settings in a tab
+// This class should render all settings in a dedicated workspace tab, mirroring the settings page
 class ExplorerEnhancerSettingsView extends ItemView {
     constructor(leaf, plugin) {
         super(leaf);
@@ -4494,6 +4669,22 @@ class ExplorerEnhancerSettingsView extends ItemView {
     }
 
     onOpen() {
+        // Clear the container
+        this.containerEl.empty();
+        // Create a header for the settings tab
+        this.containerEl.createEl('h2', { text: 'Explorer Enhancer Settings (Tab)' });
+        // Add all settings to the tab, mirroring the settings page
+        if (this.plugin && typeof this.plugin.addAllSettings === 'function') {
+            // Use the same method as the settings tab to add all settings
+            this.plugin.addAllSettings(this.containerEl);
+        } else if (this.plugin && this.plugin.settingTab && typeof this.plugin.settingTab.display === 'function') {
+            // Fallback: call display on the plugin's settingTab if available
+            this.plugin.settingTab.display();
+        } else {
+            // If no method is available, show a message
+            this.containerEl.createEl('p', { text: 'Settings UI could not be loaded.' });
+        }
+        
         this.plugin.addAllSettings(this.containerEl);
         return Promise.resolve();
     }
