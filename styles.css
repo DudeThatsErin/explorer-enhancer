@@ -17,6 +17,77 @@ body.theme-dark .nav-folder-title.is-active {
 
 /* Styles for rainbow folders will be applied by JavaScript */
 
+/* =================== SETTINGS TAB STYLES =================== */
+
+/* Make the settings tab scrollable and properly padded */
+body .vertical-tab-content[data-type="plugin"][data-plugin-id="explorer-enhancer"],
+body .vertical-tab-content-container > div[data-type="plugin"][data-plugin-id="explorer-enhancer"],
+body div.vertical-tab-content[data-type="plugin"][data-plugin-id="explorer-enhancer"],
+body .explorer-enhancer-settings-content {
+    padding: 0 25px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    height: 100% !important;
+    max-height: 100% !important;
+}
+
+/* Add proper spacing between sections */
+body .vertical-tab-content[data-type="plugin"][data-plugin-id="explorer-enhancer"] h2,
+body div.vertical-tab-content[data-type="plugin"][data-plugin-id="explorer-enhancer"] h2,
+body .explorer-enhancer-settings-content h2 {
+    margin-top: 30px !important;
+    margin-bottom: 20px !important;
+    padding-left: 10px !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    padding-bottom: 8px !important;
+    color: var(--text-accent) !important;
+}
+
+/* Style h3 headings */
+body .vertical-tab-content[data-type="plugin"][data-plugin-id="explorer-enhancer"] h3,
+body div.vertical-tab-content[data-type="plugin"][data-plugin-id="explorer-enhancer"] h3,
+body .explorer-enhancer-settings-content h3 {
+    margin-top: 20px !important;
+    margin-bottom: 10px !important;
+    padding-left: 10px !important;
+    color: var(--text-normal) !important;
+}
+
+/* Style settings items */
+body .vertical-tab-content[data-type="plugin"][data-plugin-id="explorer-enhancer"] .setting-item,
+body div.vertical-tab-content[data-type="plugin"][data-plugin-id="explorer-enhancer"] .setting-item,
+body .explorer-enhancer-settings-content .setting-item {
+    padding: 12px 10px !important;
+    border-top: 1px solid var(--background-modifier-border) !important;
+    margin-bottom: 8px !important;
+}
+
+/* Style collapsible divider details */
+.explorer-enhancer-divider-details {
+    margin: 10px 0 !important;
+    padding: 10px !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    border-radius: 5px !important;
+}
+
+.explorer-enhancer-divider-details summary {
+    cursor: pointer !important;
+    padding: 5px !important;
+    font-weight: bold !important;
+}
+
+/* Custom color containers */
+.custom-color-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin: 10px 0 20px 0 !important;
+    padding: 10px !important;
+    background: var(--background-secondary) !important;
+    border-radius: 5px !important;
+}
+
 /* =================== DIVIDER STYLES =================== */
 
 /* Special styles for critical folder dividers */
@@ -252,31 +323,27 @@ body.theme-dark .nav-folder-title.is-active {
 /* Middle border */
 .nav-folder.explorer-enhancer-divider[data-border-position="middle"],
 .nav-file.explorer-enhancer-divider[data-border-position="middle"] {
-    /* Remove all margin/padding from parent, but line will be drawn on the title */
-    margin: 0 !important;
+    position: relative;
+    display: block;
+    align-items: unset;
     padding: 0 !important;
+    margin: 0 !important;
     border: none !important;
     background: none !important;
+    /* Remove default margins from base divider style */
 }
 
-.nav-folder-title[data-divider-middle],
-.nav-file-title[data-divider-middle] {
-    margin: 0 !important;
-    padding: 0 !important;
-    position: relative;
-}
-
-.nav-folder-title[data-divider-middle]::after,
-.nav-file-title[data-divider-middle]::after {
+.nav-folder.explorer-enhancer-divider[data-border-position="middle"]::after,
+.nav-file.explorer-enhancer-divider[data-border-position="middle"]::after {
     content: "";
     display: block;
     position: absolute;
-    left: 36px; /* Indent to start after icon (adjust if needed) */
-    right: 8px; /* Stop before right edge */
-    top: 70%; /* Slightly below center, so it doesn't cross out text */
+    left: 0;
+    right: 0;
+    top: 50%;
     height: 0;
     border-top: 2px solid var(--divider-border-color, #888888);
-    z-index: 1;
+    z-index: -2;
     pointer-events: none;
 }
 

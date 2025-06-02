@@ -5,12 +5,12 @@
     "01-clips"
   ],
   "enableRainbowFolders": true,
-  "rainbowColorScheme": "vibrant",
+  "rainbowColorScheme": "twilightIndigo",
   "enableCascadingColors": true,
   "applyColorsToFiles": true,
   "colorOpacity": 0.5,
-  "displayVariant": "bordered-bg",
-  "textColorOption": "white",
+  "displayVariant": "text",
+  "textColor": "vibrant",
   "customTextColor": "#bc4e4e",
   "selectedTextColor": "#eeeeee",
   "customColors": {
@@ -45,9 +45,10 @@
       "path": "Bugfixes.md",
       "text": "Test!!!",
       "color": "#c11a1a",
-      "position": "middle",
+      "position": "before",
       "size": 10,
-      "width": 100
+      "width": 100,
+      "label": "TEST"
     }
   ],
   "dividerStyle": {
@@ -56,15 +57,19 @@
       "colorOption": "default",
       "customColor": "#E0E0E0"
     },
+    "text": {
+      "colorOption": "default",
+      "customColor": "#222222"
+    },
     "border": {
       "position": "bottom",
       "color": "#888888",
       "size": 1
     },
     "width": 100,
-    "cssPath": ".obsidian/plugins/explorer-enhancer/file-explorer-dividers.css",
     "customText": "Tasks",
     "showBefore": "",
+    "cssPath": ".obsidian/plugins/explorer-enhancer/file-explorer-dividers.css",
     "textColor": "#888888",
     "lineColor": "#cccccc",
     "backgroundColor": "var(--background-secondary)",
@@ -72,6 +77,7 @@
     "fontStyle": "normal",
     "fontSize": "14px"
   },
+  "textColorOption": "white",
   "dividerFolders": [],
   "dividerFiles": [],
   "enableFolderIcons": false,
@@ -110,5 +116,8 @@
       "dark": "#ffffff"
     }
   },
-  "opacityLevel": 0.5
+  "opacityLevel": 0.5,
+  "cascadingColors": false,
+  "displayStyle": "text-color",
+  "enableHiddenFiles": true
 }
