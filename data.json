@@ -1,0 +1,140 @@
+{
+  "hiddenFiles": [],
+  "hiddenFolders": [
+    "assets",
+    "clips"
+  ],
+  "enableRainbowFolders": true,
+  "rainbowColorScheme": "dark",
+  "textColorScheme": "forest",
+  "enableCascadingColors": true,
+  "applyColorsToFiles": true,
+  "colorOpacity": 1,
+  "displayVariant": "background",
+  "customColors": {
+    "light": [
+      "#7400b8",
+      "#6930c3",
+      "#5e60ce",
+      "#5390d9",
+      "#4ea8de",
+      "#48bfe3",
+      "#56cfe1",
+      "#64dfdf",
+      "#72efdd",
+      "#80ffdb"
+    ],
+    "dark": [
+      "#7400b8",
+      "#6930c3",
+      "#5e60ce",
+      "#5390d9",
+      "#4ea8de",
+      "#48bfe3",
+      "#56cfe1",
+      "#64dfdf",
+      "#72efdd",
+      "#80ffdb"
+    ],
+    "lightMode": [
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff"
+    ],
+    "darkMode": [
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff"
+    ]
+  },
+  "customTextColors": {
+    "light": [
+      "#000000",
+      "#ffffff",
+      "#ff0000",
+      "#00ff00",
+      "#0000ff",
+      "#ffff00",
+      "#ff00ff",
+      "#00ffff",
+      "#ff8800",
+      "#8800ff"
+    ],
+    "dark": [
+      "#000000",
+      "#ffffff",
+      "#ff0000",
+      "#00ff00",
+      "#0000ff",
+      "#ffff00",
+      "#ff00ff",
+      "#00ffff",
+      "#ff8800",
+      "#8800ff"
+    ],
+    "lightMode": [
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff"
+    ],
+    "darkMode": [
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff"
+    ]
+  },
+  "enableDividers": true,
+  "dividers": [
+    {
+      "path": "Assets.base",
+      "label": "☆ Tasks ☆",
+      "type": "file"
+    }
+  ],
+  "dividerStyle": {
+    "backgroundColor": "var(--background-secondary)",
+    "lineColor": "currentColor",
+    "paddingX": "9",
+    "textSize": "15",
+    "lineColorScheme": "default",
+    "textColorScheme": "default",
+    "textAlign": "left",
+    "displayVariant": "line-with-text"
+  },
+  "openSections": {
+    "rainbow": false,
+    "hiddenFiles": true,
+    "dividers": true,
+    "rainbowFolders": true
+  },
+  "displayStyle": "background",
+  "colorScheme": "light"
+}

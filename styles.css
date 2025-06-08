@@ -1,0 +1,121 @@
+/* Explorer Enhancer Plugin Styles */
+
+/* 
+  Note: Main divider styling is now dynamically generated in JS 
+  to match the user's file-explorer-dividers.css snippet
+*/
+
+/* Specific styles for file and folder dividers */
+.explorer-enhancer-divider-file {
+    border-left: 3px solid var(--color-accent);
+}
+
+.explorer-enhancer-divider-folder {
+    border-left: 3px solid var(--color-accent-2, var(--color-accent));
+}
+
+.hidden-files-container, 
+.hidden-folders-container, 
+.dividers-container {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.explorer-enhancer-file-path {
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    padding: 4px 0;
+}
+
+/* Adjust setting item spacing */
+.setting-item {
+    border-top: 1px solid var(--background-modifier-border);
+    padding: 10px 0;
+}
+
+/* Make file explorer dividers stand out */
+.nav-folder.mod-root > .nav-folder-children > .explorer-enhancer-divider {
+    background-color: var(--background-secondary-alt);
+    font-weight: bold;
+}
+
+/* Warning modal styles with mobile support */
+.modal {
+    max-width: 90vw;
+    width: 500px;
+    max-height: 80vh;
+}
+
+.affected-dividers-list {
+    max-height: 40vh;
+    overflow-y: auto;
+    margin: 10px 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.divider-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+    display: flex;
+    align-items: center;
+    word-break: break-all;
+}
+
+.divider-item:last-child {
+    border-bottom: none;
+}
+
+.divider-info {
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+}
+
+.warning-text {
+    color: var(--text-error);
+    font-weight: bold;
+    margin: 12px 0;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.button-container button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    min-width: 80px;
+    min-height: 40px;
+}
+
+.mod-warning {
+    background-color: var(--background-modifier-error);
+    color: var(--text-on-accent);
+}
+
+/* Media queries for small screens */
+@media screen and (max-width: 600px) {
+    .button-container {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+    
+    .button-container button {
+        width: 100%;
+        min-height: 44px; /* Larger touch targets on mobile */
+    }
+    
+    .affected-dividers-list {
+        max-height: 50vh;
+    }
+}
